@@ -62,6 +62,8 @@ def train_model(root, term_size_map, term_direct_gene_map, dG, train_data, gene_
 			param.data = torch.mul(param.data, term_mask_map[term_name]) * 0.1
 		else:
 			param.data = param.data * 0.1
+	# Here, the mask between Gene and relevant Term is initialized with Knowledge in Ontology
+	# But its params remains to be trained
 
 	train_loader = du.DataLoader(du.TensorDataset(train_feature,train_label), batch_size=batch_size, shuffle=False)
 	test_loader = du.DataLoader(du.TensorDataset(test_feature,test_label), batch_size=batch_size, shuffle=False)

@@ -26,8 +26,11 @@ def load_ontology(file_name, gene2id_mapping):
 		line = line.rstrip().split()
 		
 		if line[2] == 'default':
+			# add edge between subsystems
 			dG.add_edge(line[0], line[1])
 		else:
+			# add edges between subsystem and gene
+			# where line0 is subsys and line1 is gene
 			if line[1] not in gene2id_mapping:
 				continue
 
@@ -43,7 +46,7 @@ def load_ontology(file_name, gene2id_mapping):
 	print('There are', len(gene_set), 'genes')
 
 	for term in dG.nodes():
-		
+		# calculate the number of gene relating with every term
 		term_gene_set = set()
 
 		if term in term_direct_gene_map:

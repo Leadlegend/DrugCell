@@ -17,8 +17,8 @@ class drugcell_nn(nn.Module):
 		super(drugcell_nn, self).__init__()
 
 		self.root = root
-		self.num_hiddens_genotype = num_hiddens_genotype
-		self.num_hiddens_drug = num_hiddens_drug
+		self.num_hiddens_genotype = num_hiddens_genotype	# the number of nuerons corresponding to each genotype
+		self.num_hiddens_drug = num_hiddens_drug			# the number of nuerons corresponding to drug MLP
 		
 		# dictionary from terms to genes directly annotated with the term
 		self.term_direct_gene_map = term_direct_gene_map   
@@ -43,6 +43,7 @@ class drugcell_nn(nn.Module):
 		self.add_module('final_batchnorm_layer', nn.BatchNorm1d(num_hiddens_final))
 		self.add_module('final_aux_linear_layer', nn.Linear(num_hiddens_final,1))
 		self.add_module('final_linear_layer_output', nn.Linear(1, 1))
+		# unclear about this apart, what's the meaning of final linear layer output?
 
 	# calculate the number of values in a state (term)
 	def cal_term_dim(self, term_size_map):
@@ -98,6 +99,7 @@ class drugcell_nn(nn.Module):
 
 		while True:
 			leaves = [n for n in dG.nodes() if dG.out_degree(n) == 0]
+			# notice: here the author used out_degree, while preprocessing, the author used in_degree to find the root node
 			#leaves = [n for n,d in dG.out_degree().items() if d==0]
 			#leaves = [n for n,d in dG.out_degree() if d==0]
 
@@ -155,6 +157,7 @@ class drugcell_nn(nn.Module):
 					child_input_list.append(term_gene_out_map[term])
 
 				child_input = torch.cat(child_input_list,1)
+				# concat the output of its children as input
 
 				term_NN_out = self._modules[term+'_linear_layer'](child_input)				
 
