@@ -1,0 +1,7 @@
+defaults:
+  - vnn: drugcell
+  - drug: base
+  - base_drugcell
+  - _self_
+
+final_hid: 6

@@ -1,0 +1,8 @@
+defaults:
+  - test: base
+  - _self_
+
+train: null
+val: null
+cell2idx: ../../../data/cell2ind.txt
+drug2idx: ../../../data/drug2ind.txt

@@ -1,0 +1,7 @@
+defaults:
+  - base_drugcell
+
+onto: ../../../data/drugcell_ont.txt
+gene2idx: ../../../data/gene2ind.txt
+cell_embed: ../../../data/cell2mutation.txt
+gene_hid: 6

@@ -3,4 +3,5 @@ data/rlipp
 test/
 *__pycache__
 outputs/
-config/
+configs/
+*_all.txt

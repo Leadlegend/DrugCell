@@ -1,0 +1,11 @@
+defaults:
+  - base_drugcell_train
+
+lr: 1e-3
+epoch: 300
+device: cpu
+save_dir: ../../../models/
+save_period: 5
+ckpt: null
+optimizer: adam
+scheduler: None

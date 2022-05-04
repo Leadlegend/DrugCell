@@ -1,0 +1,8 @@
+defaults:
+  - base_base
+drug_hid:
+  - 50
+  - 10
+  - 6
+
+drug_embed: ../../../data/drug2fingerprint.txt
