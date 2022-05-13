@@ -78,6 +78,9 @@ def main(cfg: Config):
 
 
 def args_util():
+    """
+        Set the template of experiment parameters (in hydra.config_store)
+    """
     cs = ConfigStore.instance()
     cs.store(group='trainer', name='base_drugcell_train', node=TrainerConfig)
     cs.store(group='model', name='base_drugcell', node=DrugCellConfig)

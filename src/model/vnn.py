@@ -9,7 +9,7 @@ import networkx.algorithms.components.connected as nxacc
 import networkx.algorithms.dag as nxadag
 
 from tqdm import tqdm
-from data.tokenizer import load_vocab
+from ..data.tokenizer import load_vocab
 
 
 class VNNModel(nn.Module):
@@ -104,7 +104,7 @@ class VNNModel(nn.Module):
         if not os.path.exists(embed_path):
             self.logger.error('Bad Mutation File.')
             sys.exit(1)
-        feature = np.genfromtxt(embed_path, delimiter=',')
+        feature = np.genfromtxt(embed_path, delimiter=',', dtype=np.float32)
         embedding_weights = torch.from_numpy(feature)
         embed_size, num_gene = embedding_weights.shape
         embedding = nn.Embedding(
@@ -207,7 +207,7 @@ class VNNModel(nn.Module):
         term_gene_out_map = dict()
         term_NN_out_map = dict()
         aux_out_map = dict()
-        gene_embedded = self.embedding(gene_input).float()
+        gene_embedded = self.embedding(gene_input)
 
         for term in self.term_direct_gene_map.keys():
             term_gene_out_map[term] = self._modules[term +
@@ -230,7 +230,7 @@ class VNNModel(nn.Module):
                 term_Tanh_out = torch.tanh(term_linear_out)
                 term_NN_out_map[term] = self._modules[term +
                                                       '_batchnorm_layer'](term_Tanh_out)
-                #self.logger.debug(term_NN_out_map[term].shape)
+                # self.logger.debug(term_NN_out_map[term].shape)
                 aux_layer1_out = torch.tanh(
                     self._modules[term+'_aux_linear_layer1'](term_NN_out_map[term]))
                 aux_out_map[term] = self._modules[term +

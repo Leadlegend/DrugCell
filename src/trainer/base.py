@@ -94,13 +94,14 @@ class Trainer:
         return base.format(current, total, 100.0 * current / total)
 
     def _save_checkpoint(self, epoch):
+        model_dict = self.model.state_dict()
         state = {
             'epoch': epoch,
-            'state_dict': self.model.state_dict(),
+            'state_dict': model_dict,
             'optimizer': self.optimizer.state_dict()
         }
         filename = str(self.checkpoint_dir /
-                       'checkpoint-epoch{}.pth'.format(epoch))
+                       'ckpt-epoch{}.pt'.format(epoch))
         torch.save(state, filename)
         self.logger.info("Saving checkpoint: {} ...".format(filename))
 
@@ -116,14 +117,15 @@ class Trainer:
             self.start_epoch = checkpoint['epoch'] + 1
         # load optimizer state from checkpoint only when optimizer type is not changed.
         if 'state_dict' in checkpoint:
-            self.model.load_state_dict(checkpoint['state_dict'])
+            self.model.load_state_dict(checkpoint['state_dict'], strict=False)
             if checkpoint['config']['optimizer']['type'].lower() != self.config.optimizer:
                 self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
                                     "Optimizer parameters not being resumed.")
             else:
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
         else:
-            self.model.load_state_dict(checkpoint)
+            # which means that we load the ckpt not to resume training, thus the params may not match perfectly.
+            self.model.load_state_dict(checkpoint, strict=False)
 
         self.logger.info(
             "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))

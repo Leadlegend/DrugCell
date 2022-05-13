@@ -20,7 +20,7 @@ class DrugModel(nn.Module):
         if not os.path.exists(embed_path):
             self.logger.error('Bad Drug Fingerprint File.')
             sys.exit(1)
-        feature = np.genfromtxt(embed_path, delimiter=',')
+        feature = np.genfromtxt(embed_path, delimiter=',', dtype=np.float32)
         embedding_weights = torch.from_numpy(feature)
         embed_size, dim_drug = embedding_weights.shape
         embedding = nn.Embedding(
@@ -53,14 +53,14 @@ class DrugModel(nn.Module):
         """
         term_NN_out_map = dict()
         aux_out_map = dict()
-        drug_out = self.fingerprint(drug_input).float()
+        drug_out = self.fingerprint(drug_input)
         # [batch_size, gene_num]
         for i in range(1, len(self.num_hiddens_drug)+1, 1):
             drug_out = self._modules['drug_batchnorm_layer_'+str(i)](
                 torch.tanh(self._modules['drug_linear_layer_' + str(i)](drug_out)))
             term_NN_out_map['drug_'+str(i)] = drug_out
 
-            #self.logger.debug(drug_out.shape)
+            # self.logger.debug(drug_out.shape)
             aux_layer1_out = torch.tanh(
                 self._modules['drug_aux_linear_layer1_'+str(i)](drug_out))
             aux_out_map['drug_' +

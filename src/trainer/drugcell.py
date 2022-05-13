@@ -122,3 +122,21 @@ class DrugCellTrainer(Trainer):
             log.update({'epoch_loss': epoch_loss})
 
         return log
+
+    def _save_checkpoint(self, epoch):
+        """
+            Add custom save method for drugcell, which don't save embedding params.
+        """
+        model_dict = self.model.state_dict()
+        for key in model_dict.keys():
+            if key == 'vnn.embedding.weight' or key == 'drug.fingerprint.weight':
+                model_dict.pop(key)
+        state = {
+            'epoch': epoch,
+            'state_dict': model_dict,
+            'optimizer': self.optimizer.state_dict()
+        }
+        filename = str(self.checkpoint_dir /
+                       'ckpt-epoch{}.pt'.format(epoch))
+        torch.save(state, filename)
+        self.logger.info("Saving checkpoint: {} ...".format(filename))
