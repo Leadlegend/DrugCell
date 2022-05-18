@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - override /data: cross_valid
+  - _self_
+
+data:
+  test:
+    path: ../../../data/cross_valid/drugcell_split_1.txt
+
+trainer:
+  save_dir: ../../../ckpt/cv1/

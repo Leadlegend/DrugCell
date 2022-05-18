@@ -1,0 +1,9 @@
+defaults:
+  - train: cross
+  - val: cross
+  - test: cross
+  - base_train
+  - _self_
+
+cell2idx: /Users/iris/Library/CloudStorage/OneDrive-Personal/PKU/Research/Drugcell/data/cell2ind.txt
+drug2idx: /Users/iris/Library/CloudStorage/OneDrive-Personal/PKU/Research/Drugcell/data/drug2ind.txt

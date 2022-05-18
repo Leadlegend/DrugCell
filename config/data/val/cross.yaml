@@ -1,0 +1,11 @@
+path: 
+  - ../../../data/cross_valid/val/val_1.txt
+  - ../../../data/cross_valid/val/val_2.txt
+  - ../../../data/cross_valid/val/val_3.txt
+  - ../../../data/cross_valid/val/val_4.txt
+  - ../../../data/cross_valid/val/val_5.txt
+batch_size: 256
+shuffle: false
+pin: false
+lazy: false
+workers: 4
