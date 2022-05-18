@@ -5,4 +5,5 @@ test/
 outputs/
 configs/
 *_all.txt
-ckpt/
+ckpt/*.pt
+data/cross_valid/
