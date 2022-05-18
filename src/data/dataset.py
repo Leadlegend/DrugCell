@@ -3,7 +3,7 @@ import torch
 import collections
 
 from tqdm import tqdm
-from typing import Optional
+from typing import Optional, Union, List
 from dataclasses import dataclass
 from torch.utils.data import Dataset
 
@@ -37,11 +37,11 @@ class DrugCellDataset(Dataset):
     def __init__(self, cfg, cell2idx, drug2idx, sep='\t'):
         super().__init__()
         self.sep = sep
-        self.path: str = cfg.path
+        self.data_map = list()
         self.lazy_mode: bool = cfg.lazy
+        self.path: Union[str, List[str]] = cfg.path
         self.cell_tokenizer: Tokenizer = cell2idx
         self.drug_tokenizer: Tokenizer = drug2idx
-        self.data_map = list()
         self.construct_dataset()
 
     def __getitem__(self, idx: int) -> DrugCellData:
@@ -62,20 +62,27 @@ class DrugCellDataset(Dataset):
         return self._parse_data(data)
 
     def construct_dataset(self):
-        if not os.path.exists(self.path):
+        if isinstance(self.path, list):
+            for path in self.path:
+                self._construct_dataset_file(path)
+        else:
+            self._construct_dataset_file(self.path)
+
+    def _construct_dataset_file(self, path):
+        if not os.path.exists(path):
             raise ValueError('Bad Dataset File: %s' %
-                             self.path, stack_info=True)
+                             path, stack_info=True)
 
         if not self.lazy_mode:
-            with open(self.path, "r", encoding='utf-8') as f:
+            with open(path, "r", encoding='utf-8') as f:
                 for line in tqdm(f.readlines()):
                     data = line.strip().split(self.sep)
                     self.data_map.append(self._parse_data(data))
         else:
-            with open(self.path, 'r', encoding='utf-8') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 for line in tqdm(f.readlines()):
                     offset = f.tell() - len(line)
-                    handler = open(self.path, 'r', encoding='utf-8')
+                    handler = open(path, 'r', encoding='utf-8')
                     handler.seek(offset)
                     self.data_map.append(handler)
         f.close()

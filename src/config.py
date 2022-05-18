@@ -8,7 +8,7 @@ from hydra.core.config_store import ConfigStore
 
 @dataclass
 class DatasetConfig:
-    path: str = None
+    path: Union[List[str], str]
     batch_size: int = 1
     shuffle: bool = False
     pin: bool = False

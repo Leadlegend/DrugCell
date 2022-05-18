@@ -9,7 +9,7 @@ import networkx.algorithms.components.connected as nxacc
 import networkx.algorithms.dag as nxadag
 
 from tqdm import tqdm
-from ..data.tokenizer import load_vocab
+from data.tokenizer import load_vocab
 
 
 class VNNModel(nn.Module):
