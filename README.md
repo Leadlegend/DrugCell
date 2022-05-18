@@ -37,14 +37,24 @@ We use `hydra`, rather than `argparse` to implement better configuration setting
 3. To override some of the configuration on command line, you can use:
 
    ``` bash
-   python src/train.py trainer.optimizer=sgd 
+   python src/train.py trainer.optimizer=sgd ~data.train.0
    ```
+
+   where `trainer.optimizer=sgd` means to modify your optimizer as `SGD`, and `~data.train.0` means to delete the first train dataset file if you introduce a list of files as training data.
+
+   **Notice**: Hydra ver1.1 seems to have a bug about list index overriding, you may need to modify the source code of hydra to fix it.
 
 4. To set up your custom configuration, you can create a `YAML` file in a subfolder under `config`, say `kay/test.yaml`. Then you can modify the configuration whatever you want (while they should always follow the format described in `./src/config.py:Config`) . Finally, to build your experiments, input:
 
    ```bash
    python src/train.py +kay=test
    ```
+
+5. Also, in custom override file described above (say `kay/test`), you can also employ default list to specifically modify your config. You can take `kay/cross.yaml` as an example.
+
+6. We also implemented some bash scripts to conduct experiments with more sophisticated configuration. For example, you can conduct 5-fold cross-validation by running 
+
+   `bash ./scripts/cross-validation.py`
 
 ## Log
 
