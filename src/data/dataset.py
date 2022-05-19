@@ -62,16 +62,15 @@ class DrugCellDataset(Dataset):
         return self._parse_data(data)
 
     def construct_dataset(self):
-        if isinstance(self.path, list):
+        if not isinstance(self.path, str):
             for path in self.path:
-                self._construct_dataset_file(path)
+                self._construct_dataset_file(str(path))
         else:
             self._construct_dataset_file(self.path)
 
     def _construct_dataset_file(self, path):
         if not os.path.exists(path):
-            raise ValueError('Bad Dataset File: %s' %
-                             path, stack_info=True)
+            raise ValueError('Bad Dataset File: %s' % path)
 
         if not self.lazy_mode:
             with open(path, "r", encoding='utf-8') as f:

@@ -19,19 +19,19 @@ class DrugCellDataModule:
         self.setup()
 
     def setup(self):
-        if self.cfg.train is not None and os.path.exists(self.cfg.train.path):
+        if self.cfg.train is not None:
             self.logger.info("Constructing Train Data...")
             self.train_dataset = DrugCellDataset(
                 self.cfg.train, self.cell2idx, self.drug2idx)
         else:
             self.logger.warning('No Valid Train Data.')
-        if self.cfg.val is not None and os.path.exists(self.cfg.val.path):
+        if self.cfg.val is not None:
             self.logger.info(" Constructing Validation Data...")
             self.val_dataset = DrugCellDataset(
                 self.cfg.val, self.cell2idx, self.drug2idx)
         else:
             self.logger.warning('No Valid Val Data.')
-        if self.cfg.test is not None and os.path.exists(self.cfg.test.path):
+        if self.cfg.test is not None:
             self.logger.info("Constructing Test Data...")
             self.test_dataset = DrugCellDataset(
                 self.cfg.test, self.cell2idx, self.drug2idx)

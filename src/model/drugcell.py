@@ -32,6 +32,10 @@ class NewDrugCellModel(nn.Module):
     def update_by_mask(self):
         self.vnn.update_by_mask()
 
+    def _to_(self, device):
+        for key, val in self.vnn.term_mask_map.items():
+            self.vnn.term_mask_map[key] = val.to(device)
+
     def forward(self, x):
         """
             x: tuple of Tensor [batch], which corresponding to cell id and drug id
