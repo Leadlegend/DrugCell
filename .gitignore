@@ -8,3 +8,4 @@ configs/
 *_all.txt
 ckpt/*.pt
 data/cross_valid/
+.vscode
