@@ -1,9 +1,29 @@
 import hydra
+import torch.optim as opt
 
-from typing import Optional, List, Union
+from functools import partial
 from dataclasses import dataclass
+from typing import Optional, List, Union
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.config_store import ConfigStore
+
+cfg2opt = {
+    "adam": partial(opt.Adam, betas=(0.9, 0.99), eps=1e-05),
+    "sgd": opt.SGD
+}
+cfg2sch = {
+    "None":
+    None,
+    "Plateau":
+    partial(
+        opt.lr_scheduler.ReduceLROnPlateau,
+        factor=0.9,
+        mode='min',
+        patience=9,
+        cooldown=2,
+        min_lr=2e-5,
+    )
+}
 
 
 @dataclass
@@ -18,8 +38,8 @@ class DatasetConfig:
 
 @dataclass
 class DataConfig:
-    cell2idx: str                       # path of cell2idx file
-    drug2idx: str                       # path of drug2idx file
+    cell2idx: str  # path of cell2idx file
+    drug2idx: str  # path of drug2idx file
     train: Optional[DatasetConfig]
     val: Optional[DatasetConfig]
     test: Optional[DatasetConfig]
@@ -27,14 +47,14 @@ class DataConfig:
 
 @dataclass
 class TrainerConfig:
-    lr: float                   # learning rate
-    epoch: int                  # epoch number
-    device: str                 # Cuda / cpu
-    save_dir: str               # model checkpoint saving directory
-    save_period: int = 1        # save one checkpoint every $save_period epoch
+    lr: float  # learning rate
+    epoch: int  # epoch number
+    device: str  # Cuda / cpu
+    save_dir: str  # model checkpoint saving directory
+    save_period: int = 1  # save one checkpoint every $save_period epoch
     ckpt: Optional[str] = None  # model initialization
-    optimizer: str = 'adam'     # optimizer name
-    scheduler: str = 'None'     # lr_scheduler name
+    optimizer: str = 'adam'  # optimizer name
+    scheduler: str = 'None'  # lr_scheduler name
 
 
 @dataclass
@@ -45,16 +65,16 @@ class LoggerConfig:
 
 @dataclass
 class VNNConfig:
-    onto: str                   # path of Ontology file
-    gene2idx: str               # path of gene2idx file
-    cell_embed: str             # path of cell2mutation file
-    gene_hid: int = 6           # number of Neuron corresponding to a term
+    onto: str  # path of Ontology file
+    gene2idx: str  # path of gene2idx file
+    cell_embed: str  # path of cell2mutation file
+    gene_hid: int = 6  # number of Neuron corresponding to a term
 
 
 @dataclass
 class DrugConfig:
-    drug_hid: List[int]         # NN structure of drug model
-    drug_embed: str             # path of drug fingerprint file
+    drug_hid: List[int]  # NN structure of drug model
+    drug_embed: str  # path of drug fingerprint file
 
 
 @dataclass

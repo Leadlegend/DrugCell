@@ -1,24 +1,18 @@
 import torch
 import hydra
 
-from functools import partial
 from logger import setup_logging
-from config import args_util
+from config import args_util, cfg2opt, cfg2sch
 from trainer.drugcell import DrugCellTrainer
 from data.datamodule import DrugCellDataModule
 from model.drugcell import DrugCellModel, NewDrugCellModel
 from model.criterions import DrugCellLoss, Pearson_Correlation
 
 
-cfg2opt = {"adam": partial(torch.optim.Adam, betas=(
-    0.9, 0.99), eps=1e-05), "sgd": torch.optim.SGD}
-cfg2sch = {"None": None}
-
-
 def init_optimizer(cfg, model):
     opt, lr, sched = cfg.optimizer.lower(), cfg.lr, cfg.scheduler
     optimizer = cfg2opt[opt](params=model.parameters(), lr=lr)
-    scheduler = cfg2sch[sched]
+    scheduler = cfg2sch.get(sched, None)
     if scheduler is not None:
         scheduler = scheduler(optimizer=optimizer)
     return optimizer, scheduler
