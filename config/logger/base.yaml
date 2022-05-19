@@ -1,4 +1,4 @@
 defaults:
   - base_base
-cfg_path: ../../logger/config.json
-save_dir: ../../../outputs/
+cfg_path: ../../../src/logger/config.json
+save_dir: ./

@@ -5,7 +5,14 @@ defaults:
 
 data:
   test:
-    path: ../../../data/cross_valid/drugcell_split_1.txt
+    path: null
+    batch_size: 3072
+  train:
+    batch_size: 3072
+  val:
+    batch_size: 256
 
 trainer:
-  save_dir: ../../../ckpt/cv1/
+  save_dir: null
+  lr: 2e-2
+  scheduler: Plateau

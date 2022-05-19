@@ -3,7 +3,7 @@ defaults:
 
 lr: 1e-3
 epoch: 300
-device: cpu
+device: cuda:1
 save_dir: ../../../ckpt/
 save_period: 5
 ckpt: null
