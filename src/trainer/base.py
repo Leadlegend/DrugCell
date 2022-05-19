@@ -2,6 +2,7 @@ import os
 import sys
 import torch
 import logging
+import subprocess
 import numpy as np
 
 
@@ -26,7 +27,15 @@ class Trainer:
 
         # setup visualization writer instance
         self.logger = logging.getLogger('Trainer')
-        self.log_step = int(np.sqrt(data_loader.batch_size))
+        self.log_step = int(np.sqrt(len(data_loader)))
+        self.logger.info('Logger Trainer will report info every %d steps' %self.log_step)
+
+        if not os.path.exists(self.checkpoint_dir):
+            self.logger.warning('Bad checkpoint save directory %s, try to create it.' %self.checkpoint_dir)
+            try:
+                subprocess.run('mkdir -p %s' % self.checkpoint_dir)
+            except:
+                raise ValueError('Cannot create directory %s' % self.checkpoint_dir)
 
     def train(self):
         for epoch in range(self.start_epoch, self.epochs + 1):
@@ -98,10 +107,11 @@ class Trainer:
         state = {
             'epoch': epoch,
             'state_dict': model_dict,
-            'optimizer': self.optimizer.state_dict()
+            'optimizer': self.optimizer.state_dict(),
         }
-        filename = str(self.checkpoint_dir /
-                       'ckpt-epoch{}.pt'.format(epoch))
+        if self.lr_scheduler is not None:
+            state['scheduler'] = self.lr_scheduler.state_dict()
+        filename = os.path.join(self.checkpoint_dir,'ckpt-epoch{}.pt'.format(epoch))
         torch.save(state, filename)
         self.logger.info("Saving checkpoint: {} ...".format(filename))
 
@@ -117,12 +127,13 @@ class Trainer:
             self.start_epoch = checkpoint['epoch'] + 1
         # load optimizer state from checkpoint only when optimizer type is not changed.
         if 'state_dict' in checkpoint:
-            self.model.load_state_dict(checkpoint['state_dict'], strict=False)
-            if checkpoint['config']['optimizer']['type'].lower() != self.config.optimizer:
-                self.logger.warning("Warning: Optimizer type given in config file is different from that of checkpoint. "
-                                    "Optimizer parameters not being resumed.")
-            else:
+            try:
+                self.model.load_state_dict(checkpoint['state_dict'], strict=False)
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
+                self.lr_scheduler.load_state_dict(checkpoint['scheduler'])
+            except Exception as e:
+                self.logger.error('Different model structture, optimizer or lr_scheduler, \
+                    Please ensure you use the same configuration before resuming training.', stack_info=True)
         else:
             # which means that we load the ckpt not to resume training, thus the params may not match perfectly.
             self.model.load_state_dict(checkpoint, strict=False)
