@@ -1,6 +1,7 @@
 data/rlipp
 .DS_Store
 test/
+!config/**/test
 *__pycache__
 outputs/
 configs/
