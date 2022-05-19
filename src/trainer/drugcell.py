@@ -40,7 +40,7 @@ class DrugCellTrainer(Trainer):
             if log['val_epoch_loss'] >= max_epoch_loss:
                 max_epoch_loss = log['val_epoch_loss']
                 best_epoch_index = epoch
-                if epoch > self.epoch / 3:
+                if epoch > self.epochs / 3:
                     save_flag = True
 
             # print logged informations to the screen

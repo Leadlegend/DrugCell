@@ -6,6 +6,6 @@ test/
 outputs/
 configs/
 *_all.txt
-ckpt/*.pt
+*.pt
 data/cross_valid/
 .vscode
