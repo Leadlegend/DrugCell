@@ -13,6 +13,6 @@ data:
     batch_size: 256
 
 trainer:
-  save_dir: null
+  save_dir: ../../../ckpt
   lr: 2e-2
   scheduler: Plateau
