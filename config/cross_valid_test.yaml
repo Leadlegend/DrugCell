@@ -1,0 +1,6 @@
+defaults:
+  - data: predict
+  - model: drugcell
+  - trainer: predict
+  - logger: base
+  - _self_

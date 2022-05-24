@@ -9,3 +9,4 @@ save_period: 5
 ckpt: null
 optimizer: adam
 scheduler: None
+epoch_criterion: pearson
