@@ -6,10 +6,12 @@ from dataclasses import dataclass
 from typing import Optional, List, Union
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.config_store import ConfigStore
+from model.criterions import Spearman_Correlation, Pearson_Correlation
+
 
 cfg2opt = {
     "adam": partial(opt.Adam, betas=(0.9, 0.99), eps=1e-05),
-    "sgd": opt.SGD
+    "sgd": opt.SGD,
 }
 cfg2sch = {
     "None":
@@ -22,7 +24,12 @@ cfg2sch = {
         patience=9,
         cooldown=2,
         min_lr=2e-5,
-    )
+    ),
+}
+cfg2ep_crt = {
+    'none': None,
+    "pearson": Pearson_Correlation,
+    'spearman': Spearman_Correlation,
 }
 
 
@@ -34,6 +41,7 @@ class DatasetConfig:
     pin: bool = False
     workers: int = 0
     lazy: bool = False
+    label: Optional[bool] = True
 
 
 @dataclass
@@ -53,8 +61,9 @@ class TrainerConfig:
     save_dir: str  # model checkpoint saving directory
     save_period: int = 1  # save one checkpoint every $save_period epoch
     ckpt: Optional[str] = None  # model initialization
-    optimizer: str = 'adam'  # optimizer name
-    scheduler: str = 'None'  # lr_scheduler name
+    optimizer: Optional[str] = 'adam'  # optimizer name
+    scheduler: Optional[str] = 'None'  # lr_scheduler name
+    epoch_criterion: Optional[str] = 'pearson'
 
 
 @dataclass

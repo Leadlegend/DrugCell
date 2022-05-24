@@ -21,6 +21,7 @@ class DrugCellTrainer(Trainer):
               self).__init__(model, criterion, optimizer, config, device,
                              data_loader, valid_data_loader, lr_scheduler)
         self.epoch_criterion = epoch_criterion
+        self.epoch_loss_name = '%s_correlation' % config.epoch_criterion if epoch_criterion is not None else ''
         if config.ckpt is not None:
             self._resume_checkpoint(config.ckpt)
         self.model._to_(self.device)
@@ -37,15 +38,15 @@ class DrugCellTrainer(Trainer):
             log = {'epoch': epoch}
             log.update(result)
 
-            if log['val_epoch_loss'] >= max_epoch_loss:
-                max_epoch_loss = log['val_epoch_loss']
+            if log['val_%s'%self.epoch_loss_name] >= max_epoch_loss:
+                max_epoch_loss = log['val_%s'%self.epoch_loss_name]
                 best_epoch_index = epoch
                 if epoch > self.epochs / 3:
                     save_flag = True
 
             # print logged informations to the screen
             for key, value in log.items():
-                if key.endswith('epoch_loss'):
+                if key.endswith('correlation'):
                     self.logger.info('{:15s}: {}'.format(str(key), value))
                 else:
                     self.logger.debug('{:15s}: {}'.format(str(key), value))
@@ -104,7 +105,7 @@ class DrugCellTrainer(Trainer):
 
         if self.epoch_criterion is not None:
             epoch_loss = self.epoch_criterion(labels_pred, labels_gold)
-            log.update({'epoch_loss': epoch_loss})
+            log.update({self.epoch_loss_name: epoch_loss})
 
         if self.do_validation:
             self.logger.info('Finished Training, Start Validation...')
@@ -134,12 +135,12 @@ class DrugCellTrainer(Trainer):
                 log.update({str(batch_idx): loss.item()})
                 if self.epoch_criterion is not None:
                     labels_pred = self._concat_output(labels_pred,
-                                                      output['final'].detach())
+                                                      output['final'])
                     labels_gold = self._concat_output(labels_gold, label)
 
         if self.epoch_criterion is not None:
             epoch_loss = self.epoch_criterion(labels_pred, labels_gold)
-            log.update({'epoch_loss': epoch_loss})
+            log.update({self.epoch_loss_name: epoch_loss})
 
         return log
 
