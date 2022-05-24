@@ -1,11 +1,10 @@
 import os
 import torch
-import collections
 
 from tqdm import tqdm
-from typing import Optional, Union, List
 from dataclasses import dataclass
 from torch.utils.data import Dataset
+from typing import Optional, Union, List
 
 from .tokenizer import Tokenizer
 
@@ -30,7 +29,10 @@ class DrugCellBatch:
             return (self.cell_ids, self.drug_ids)
 
     def to(self, device):
-        return ((self.cell_ids.to(device), self.drug_ids.to(device)), self.labels.to(device))
+        if self.labels is not None:
+            return ((self.cell_ids.to(device), self.drug_ids.to(device)), self.labels.to(device))
+        else:
+            return ((self.cell_ids.to(device), self.drug_ids.to(device)), None)
 
 
 class DrugCellDataset(Dataset):

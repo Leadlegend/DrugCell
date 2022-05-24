@@ -19,7 +19,7 @@ def write_json(content, fname):
         json.dump(content, handle, indent=4, sort_keys=False)
 
 
-def setup_logging(save_dir='.', log_config='code/logger/config.json', default_level=logging.INFO):
+def setup_logging(save_dir='.', log_config='code/logger/config.json', default_level=logging.INFO, file_name=None):
     """
     Setup logging configuration
     """
@@ -29,8 +29,12 @@ def setup_logging(save_dir='.', log_config='code/logger/config.json', default_le
         # modify logging paths based on run config
         for _, handler in config['handlers'].items():
             if 'filename' in handler:
-                handler['filename'] = os.path.join(
-                    save_dir, handler['filename'])
+                if file_name is not None:
+                    handler['filename'] = os.path.join(
+                        save_dir, file_name)
+                else:
+                    handler['filename'] = os.path.join(
+                        save_dir, handler['filename'])
 
         logging.config.dictConfig(config)
     else:

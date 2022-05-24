@@ -43,7 +43,7 @@ class DrugCellDataModule:
         dataloader = DataLoader(dataset=self.train_dataset,
                                 batch_size=self.cfg.train.batch_size,
                                 collate_fn=partial(
-                                    drugcell_collate_fn, labeled=True),
+                                    drugcell_collate_fn, labeled=self.cfg.train.label),
                                 pin_memory=self.cfg.train.pin,
                                 num_workers=self.cfg.train.workers,
                                 shuffle=self.cfg.train.shuffle
@@ -54,7 +54,7 @@ class DrugCellDataModule:
         dataloader = DataLoader(dataset=self.val_dataset,
                                 batch_size=self.cfg.val.batch_size,
                                 collate_fn=partial(
-                                    drugcell_collate_fn, labeled=True),
+                                    drugcell_collate_fn, labeled=self.cfg.val.label),
                                 pin_memory=self.cfg.val.pin,
                                 num_workers=self.cfg.val.workers,
                                 shuffle=self.cfg.val.shuffle
@@ -65,7 +65,7 @@ class DrugCellDataModule:
         dataloader = DataLoader(dataset=self.test_dataset,
                                 batch_size=self.cfg.test.batch_size,
                                 collate_fn=partial(
-                                    drugcell_collate_fn, labeled=False),
+                                    drugcell_collate_fn, labeled=self.cfg.test.label),
                                 pin_memory=self.cfg.test.pin,
                                 num_workers=self.cfg.test.workers,
                                 shuffle=self.cfg.test.shuffle
