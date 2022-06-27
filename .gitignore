@@ -9,3 +9,4 @@ configs/
 *.pt
 data/cross_valid/
 .vscode
+data/raw
