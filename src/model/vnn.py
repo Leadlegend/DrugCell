@@ -100,6 +100,9 @@ class VNNModel(nn.Module):
         return dG, leaves[0], term_size_map, term_direct_gene_map
 
     def construct_embedding(self, embed_path):
+        """
+        return embedding: cell-line id -> gene mutation vector (size: num_gene)
+        """
         self.logger.info('Constructing Cell Mutational Feature...')
         if not os.path.exists(embed_path):
             self.logger.error('Bad Mutation File.')
@@ -164,6 +167,9 @@ class VNNModel(nn.Module):
             dG.remove_nodes_from(leaves)
 
     def cal_term_dim(self, term_size_map):
+        """
+        Trivial(uniform) Distribution for neuron_num of each GO Term
+        """
         for term, term_size in term_size_map.items():
             num_output = self.num_hiddens_genotype
             self.logger.debug("term\t%s\tterm_size\t%d\tnum_hiddens\t%d" %
@@ -171,6 +177,11 @@ class VNNModel(nn.Module):
             self.term_dim_map[term] = num_output
 
     def cal_term_mask(self):
+        """
+        Calculate the connection mask between each Term and Gene in VNN
+        term_mask_map: dict[term_name] -> mask
+        where mask: (num_direct-gene_of_term, num_gene)
+        """
         for term, gene_set in self.term_direct_gene_map.items():
             mask = torch.zeros(len(gene_set), self.gene_dim)
             for i, gene_id in enumerate(gene_set):
@@ -181,13 +192,13 @@ class VNNModel(nn.Module):
     def init_by_mask(self):
         if len(self.term_dim_map):
             for name, param in self.named_parameters():
-                term = name.split('_')[0]
-                if '_direct_gene_layer.weight' in name:
+                if name.endswith('_direct_gene_layer.weight'):
+                    term = name.split('_')[0]
                     param.mul_(self.term_mask_map[term])
 
     def update_by_mask(self):
         """
-        Given that every Term in Dcell has access to all of Gene
+        Given that every Term in VNN has access to all of Gene
         While actually, we want Term to follow prior knowledge of GO 
         which was defined by direct Gene map or term_mask_map
         """
@@ -200,9 +211,9 @@ class VNNModel(nn.Module):
 
     def forward(self, gene_input):
         """
-                        gene_input: [batch_size]
-                        term_NN_out_map: dict of Neural output of every term in VNN
-                        aux_out_map: dict of predicted result of every term in VNN
+        params: gene_input: [batch_size]
+        return: term_NN_out_map: dict of Neural output of every term in VNN
+        return: aux_out_map: dict of predicted result of every term in VNN
         """
         term_gene_out_map = dict()
         term_NN_out_map = dict()
