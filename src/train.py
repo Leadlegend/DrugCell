@@ -2,28 +2,19 @@ import torch
 import hydra
 
 from logger import setup_logging
-from model.criterions import DrugCellLoss
+from model.drugcell import DrugCellModel
 from trainer.drugcell import DrugCellTrainer
 from data.datamodule import DrugCellDataModule
-from model.drugcell import DrugCellModel, NewDrugCellModel
-from config import args_util, cfg2opt, cfg2sch, cfg2ep_crt
-
-
-def init_optimizer(cfg, model):
-    opt, lr, sched, epc = cfg.optimizer.lower(), cfg.lr, cfg.scheduler, cfg.epoch_criterion
-    optimizer = cfg2opt[opt](params=model.parameters(), lr=lr)
-    scheduler = cfg2sch.get(sched, None)
-    epoch_criterion = cfg2ep_crt.get(epc, None)
-    if scheduler is not None:
-        scheduler = scheduler(optimizer=optimizer)
-    return optimizer, scheduler, epoch_criterion
+from config import args_util, init_optimizer
 
 
 def train(cfg):
     datamodule = DrugCellDataModule(cfg.data)
     train_loader, val_loader = datamodule.train_dataloader(), datamodule.val_dataloader()
-    model = NewDrugCellModel(cfg.model)
+    
+    model = DrugCellModel(cfg.model)
     optim, sched, epoch = init_optimizer(cfg.trainer, model)
+    
     trainer = DrugCellTrainer(model=model, config=cfg.trainer, device=cfg.trainer.device,
                               data_loader=train_loader, valid_data_loader=val_loader,
                               optimizer=optim, lr_scheduler=sched,

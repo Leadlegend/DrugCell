@@ -6,13 +6,15 @@ from dataclasses import dataclass
 from typing import Optional, List, Union
 from omegaconf import DictConfig, OmegaConf
 from hydra.core.config_store import ConfigStore
-from model.criterions import Spearman_Correlation, Pearson_Correlation
+
+from model.criterions import *
 
 
 cfg2opt = {
     "adam": partial(opt.Adam, betas=(0.9, 0.99), eps=1e-05),
     "sgd": opt.SGD,
 }
+
 cfg2sch = {
     "None":
     None,
@@ -26,11 +28,28 @@ cfg2sch = {
         min_lr=2e-5,
     ),
 }
+
+cfg2crt = {
+    'default': DrugCellLoss,
+    'text': DrugCell_Text_Regulation,
+}
+
 cfg2ep_crt = {
     'none': None,
     "pearson": Pearson_Correlation,
     'spearman': Spearman_Correlation,
 }
+
+
+def init_optimizer(cfg, model):
+    opt, lr, sched, epc = cfg.optimizer.lower(
+    ), cfg.lr, cfg.scheduler, cfg.epoch_criterion
+    optimizer = cfg2opt[opt](params=model.parameters(), lr=lr)
+    scheduler = cfg2sch.get(sched, None)
+    epoch_criterion = cfg2ep_crt.get(epc, None)
+    if scheduler is not None:
+        scheduler = scheduler(optimizer=optimizer)
+    return optimizer, scheduler, epoch_criterion
 
 
 @dataclass
@@ -78,6 +97,7 @@ class VNNConfig:
     gene2idx: str  # path of gene2idx file
     cell_embed: str  # path of cell2mutation file
     gene_hid: int = 6  # number of Neuron corresponding to a term
+    text_dim: int = 768
 
 
 @dataclass
@@ -91,6 +111,7 @@ class DrugCellConfig:
     vnn: VNNConfig
     drug: DrugConfig
     final_hid: int = 6
+    criterion: str = 'default'
 
 
 @dataclass

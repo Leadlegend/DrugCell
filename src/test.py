@@ -1,20 +1,19 @@
 import torch
 import hydra
 
-from config import args_util, cfg2ep_crt
 from logger import setup_logging
+from model.drugcell import DrugCellModel
 from tester.drugcell import DrugCellTester
 from data.datamodule import DrugCellDataModule
-from model.drugcell import NewDrugCellModel
-from model.criterions import DrugCellLoss
+from config import args_util, cfg2ep_crt, cfg2crt
 
 
 def cross_valid_test(cfg):
     datamodule = DrugCellDataModule(cfg.data)
     test_loader = datamodule.test_dataloader()
-    model = NewDrugCellModel(cfg.model)
+    model = DrugCellModel(cfg.model)
     tester = DrugCellTester(model=model, config=cfg.trainer, device=cfg.trainer.device,
-                              data_loader=test_loader, criterion=DrugCellLoss, 
+                              data_loader=test_loader, criterion=cfg2crt[cfg.model.criterion], 
                               epoch_criterion=cfg2ep_crt.get(cfg.trainer.epoch_criterion, None))
     tester.test()
 
