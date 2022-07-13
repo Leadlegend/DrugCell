@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+drugcell_criterion = nn.MSELoss()
+
+
 def Pearson_Correlation(y_pred: torch.Tensor,
                         y_true: torch.Tensor) -> torch.Tensor:
     """
@@ -15,14 +18,27 @@ def Pearson_Correlation(y_pred: torch.Tensor,
     return torch.sum(yp * yt) / (torch.norm(yp, 2) * torch.norm(yt, 2))
 
 
-def DrugCellLoss(outputs: dict, y_true: torch.Tensor) -> torch.Tensor:
-    loss = 0.0
-    criterion = nn.MSELoss()
-    for name, y_pred in outputs.items():
-        if name == 'final':
-            loss += criterion(y_pred, y_true)
-        else:
-            loss += 0.2 * criterion(y_pred, y_true)
+def DrugCellLoss(outputs: dict, y_true: torch.Tensor, lambda_r: float = 0.2) -> torch.Tensor:
+    loss = drugcell_criterion(outputs['final'], y_true)
+    if lambda_r > 0:
+        for name, y_pred in outputs.items():
+            if name == 'final':
+                continue
+            elif not name.startswith('text'):
+                loss += lambda_r * drugcell_criterion(y_pred, y_true)
+    return loss
+
+
+def DrugCell_Text_Regulation(outputs: dict, y_true: torch.Tensor, lambda_r: float = 0, lambda_t: float = 0.2) -> torch.Tensor:
+    loss = drugcell_criterion(outputs['final'], y_true)
+    if lambda_r > 0:
+        for name, y_pred in outputs.items():
+            if name == 'final':
+                continue
+            elif not name.startswith('text_'):
+                loss += lambda_r * drugcell_criterion(y_pred, y_true)
+            else:
+                loss += lambda_t * y_pred
     return loss
 
 

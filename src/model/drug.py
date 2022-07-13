@@ -66,4 +66,4 @@ class DrugModel(nn.Module):
             aux_out_map['drug_' +
                         str(i)] = self._modules['drug_aux_linear_layer2_'+str(i)](aux_layer1_out)
 
-        return drug_out, term_NN_out_map, aux_out_map
+        return drug_out, aux_out_map, term_NN_out_map

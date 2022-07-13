@@ -5,10 +5,11 @@ import logging
 import numpy as np
 import networkx as nx
 import torch.nn as nn
-import networkx.algorithms.components.connected as nxacc
 import networkx.algorithms.dag as nxadag
+import networkx.algorithms.components.connected as nxacc
 
 from tqdm import tqdm
+from transformers import AutoTokenizer, AutoModel
 from data.tokenizer import load_vocab
 
 
@@ -16,6 +17,7 @@ class VNNModel(nn.Module):
     def __init__(self, cfg):
         super(VNNModel, self).__init__()
         self.num_hiddens_genotype = cfg.gene_hid
+        self.num_hiddens_text = cfg.text_dim if cfg.text_dim is not None else 0
         self.term_dim_map = dict()
         self.term_mask_map = dict()
         # term_neighbor_map records all children of each term
@@ -30,6 +32,8 @@ class VNNModel(nn.Module):
             cfg.onto, cfg.gene2idx)
         self.cal_term_dim(term_size_map)
         self.cal_term_mask()
+        if self.num_hiddens_text > 0:
+            self.construct_text_embedding(cfg.bert)
 
         self.contruct_direct_gene_layer()
         self.construct_vnn(dG)
@@ -166,6 +170,15 @@ class VNNModel(nn.Module):
                 self.add_module(term+'_aux_linear_layer2', nn.Linear(1, 1))
             dG.remove_nodes_from(leaves)
 
+    def construct_text_embedding(self, dG):
+        self.logger.info('Initialize torch Buffer to store text features in %s to encode text data...' % cfg.bert)
+
+        terms = dG.nodes()
+        for term in terms:
+            term_text_data = torch.zeros(size=self.num_hiddens_text)
+            self.register_buffer('%s_text.feature'% term, term_text_data)
+            self.add_module('%s_text_linear_layer'% term, nn.Linear(self.num_hiddens_text, self.num_hiddens_genotype))
+
     def cal_term_dim(self, term_size_map):
         """
         Trivial(uniform) Distribution for neuron_num of each GO Term
@@ -179,6 +192,7 @@ class VNNModel(nn.Module):
     def cal_term_mask(self):
         """
         Calculate the connection mask between each Term and Gene in VNN
+        which will ensure each GO Term in VNN only have access to their relevant Gene
         term_mask_map: dict[term_name] -> mask
         where mask: (num_direct-gene_of_term, num_gene)
         """
@@ -190,6 +204,9 @@ class VNNModel(nn.Module):
         return self.term_mask_map
 
     def init_by_mask(self):
+        """
+        This function guarantee that Linear Layer between GO Terms and thier relevant Genes is shaped by VNN Structure
+        """
         if len(self.term_dim_map):
             for name, param in self.named_parameters():
                 if name.endswith('_direct_gene_layer.weight'):
@@ -219,10 +236,12 @@ class VNNModel(nn.Module):
         term_NN_out_map = dict()
         aux_out_map = dict()
         gene_embedded = self.embedding(gene_input)
+        # (batch_size, enbed_size)
 
         for term in self.term_direct_gene_map.keys():
             term_gene_out_map[term] = self._modules[term +
                                                     '_direct_gene_layer'](gene_embedded)
+            # For each term,
 
         for i, layer in enumerate(self.term_layers):
             for term in layer:
