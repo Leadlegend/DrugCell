@@ -9,7 +9,6 @@ class DrugCellTrainer(Trainer):
 
     def __init__(self,
                  model,
-                 criterion,
                  optimizer,
                  config,
                  device,
@@ -18,7 +17,7 @@ class DrugCellTrainer(Trainer):
                  lr_scheduler=None,
                  epoch_criterion=None):
         super(DrugCellTrainer,
-              self).__init__(model, criterion, optimizer, config, device,
+              self).__init__(model, optimizer, config, device,
                              data_loader, valid_data_loader, lr_scheduler)
         self.epoch_criterion = epoch_criterion
         self.epoch_loss_name = '%s_correlation' % config.epoch_criterion if epoch_criterion is not None else ''
@@ -38,8 +37,8 @@ class DrugCellTrainer(Trainer):
             log = {'epoch': epoch}
             log.update(result)
 
-            if log['val_%s'%self.epoch_loss_name] >= max_epoch_loss:
-                max_epoch_loss = log['val_%s'%self.epoch_loss_name]
+            if log['val_%s' % self.epoch_loss_name] >= max_epoch_loss:
+                max_epoch_loss = log['val_%s' % self.epoch_loss_name]
                 best_epoch_index = epoch
                 if epoch > self.epochs / 3:
                     save_flag = True
@@ -65,6 +64,21 @@ class DrugCellTrainer(Trainer):
             labels = torch.cat([labels, output.detach()], dim=0)
         return labels
 
+    def _out2pred(self, output):
+        loss, pred = output
+        return loss, pred
+
+    def _batch2data(self, batch, labeled=True):
+        if isinstance(batch, tuple):
+            data, label = batch[0].to(self.device), batch[1].to(
+                self.device)
+        else:
+            data, label = batch.to(self.device)
+        if labeled:
+            return data, label
+        else:
+            return data
+
     def _train_epoch(self, epoch):
         self.model.train()
         log = dict()
@@ -73,26 +87,19 @@ class DrugCellTrainer(Trainer):
             labels_pred, labels_gold = torch.zeros(0, 0).to(
                 self.device), torch.zeros(0, 0).to(self.device)
         for batch_idx, batch in enumerate(tqdm(self.data_loader)):
-            if isinstance(batch, tuple):
-                data, label = batch[0].to(self.device), batch[1].to(
-                    self.device)
-            else:
-                data, label = batch.to(self.device)
+            data, label = self._batch2data(batch)
             self.optimizer.zero_grad()
-            output, _ = self.model(data)
-
-            if self.epoch_criterion is not None:
-                labels_pred = self._concat_output(labels_pred,
-                                                  output['final'].detach())
-                labels_gold = self._concat_output(labels_gold, label)
-
-            loss = self.criterion(output, label)
+            output = self.model.train_step(data, label)
+            loss, pred = self._out2pred(output)
             loss.backward()
             self.model.update_by_mask()
             self.optimizer.step()
 
-            log.update({str(batch_idx): loss.item()})
+            if self.epoch_criterion is not None:
+                labels_pred = self._concat_output(labels_pred, pred)
+                labels_gold = self._concat_output(labels_gold, label)
 
+            log.update({str(batch_idx): loss.item()})
             if batch_idx % self.log_step == 0:
                 self.logger.info(
                     'Train Epoch: {} {}\t|\tLR: {:.5f}\t|\tLoss: {:.6f}'.format(
@@ -124,18 +131,13 @@ class DrugCellTrainer(Trainer):
 
         with torch.no_grad():
             for batch_idx, batch in enumerate(tqdm(self.valid_data_loader)):
-                if isinstance(batch, tuple):
-                    data, label = batch[0].to(self.device), batch[1].to(
-                        self.device)
-                else:
-                    data, label = batch.to(self.device)
+                data, label = self._batch2data(batch)
+                output = self.model.train_step(data, label)
+                loss, pred = self._out2pred(output)
 
-                output, _ = self.model(data)
-                loss = self.criterion(output, label)
                 log.update({str(batch_idx): loss.item()})
                 if self.epoch_criterion is not None:
-                    labels_pred = self._concat_output(labels_pred,
-                                                      output['final'])
+                    labels_pred = self._concat_output(labels_pred, pred)
                     labels_gold = self._concat_output(labels_gold, label)
 
         if self.epoch_criterion is not None:

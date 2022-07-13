@@ -10,7 +10,6 @@ class Trainer:
 
     def __init__(self,
                  model,
-                 criterion,
                  optimizer,
                  config,
                  device,
@@ -20,7 +19,6 @@ class Trainer:
         self.config = config
         self.device = device
         self.model = model.to(device)
-        self.criterion = criterion
         self.optimizer = optimizer
 
         self.data_loader = data_loader
@@ -71,13 +69,12 @@ class Trainer:
             data, label = data.to(self.device), label.to(self.device)
 
             self.optimizer.zero_grad()
-            output = self.model(data)
-            loss = self.criterion(output, label)
+            output = self.model.train_step(data, label)
+            loss = self._out2pred(output)
             loss.backward()
             self.optimizer.step()
 
             log.update({str(batch_idx): loss.item()})
-
             if batch_idx % self.log_step == 0:
                 self.logger.info('Train Epoch: {} {} Loss: {:.6f}'.format(
                     epoch, self._progress(batch_idx), loss.item()))
@@ -97,8 +94,8 @@ class Trainer:
             for batch_idx, (data, target) in enumerate(self.valid_data_loader):
                 data, target = data.to(self.device), target.to(self.device)
 
-                output = self.model(data)
-                loss = self.criterion(output, target)
+                output = self.model.train_step(data, target)
+                loss = self._out2pred(output)
                 log.update({str(batch_idx): loss.item()})
         return log
 
@@ -111,6 +108,9 @@ class Trainer:
             current = batch_idx
             total = self.len_epoch
         return base.format(current, total, 100.0 * current / total)
+
+    def _out2pred(self, output):
+        return output
 
     def _save_checkpoint(self, epoch):
         model_dict = self.model.state_dict()
@@ -147,7 +147,7 @@ class Trainer:
             except Exception as e:
                 self.logger.error(
                     'Different model structture, optimizer or lr_scheduler, \
-                    Please ensure you use the same configuration before resuming training.'                                                                                           ,
+                    Please ensure you use the same configuration before resuming training.',
                     stack_info=True)
         else:
             # which means that we load the ckpt not to resume training, thus the params may not match perfectly.
