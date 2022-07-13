@@ -1,6 +1,6 @@
 import json
 from tqdm import tqdm
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 
 class GeneOntologyReader(object):
@@ -42,6 +42,16 @@ def transfer_obo2json(src_path, dst_path):
         fileObject.close()
 
 
+def term2text(term: dict):
+    text = ''
+    text += term['name'] + '. '
+    if 'synonym' in term:
+        for syn in term['synonym']:
+            text += syn + '. '
+    text += term['def']
+    return text
+
+
 def text_analyzer(go_path, graph_path, def_path, nodef_path):
     """
     Analyze the text of a given ontology file.
@@ -59,18 +69,20 @@ def text_analyzer(go_path, graph_path, def_path, nodef_path):
             go_terms.update(terms)
         f.close()
     print('Number of terms in Dcell graph: %s' % len(go_terms))
-    go_def = {term: False for term in go_terms}
+    go_def = OrderedDict()
+    for term in go_terms:
+        go_def[term] = False
     with open(go_path, 'r', encoding='utf-8') as f:
         for line in tqdm(f.readlines()):
             term = json.loads(line.strip())
             if 'def' not in term:
                 continue
             if term['id'] in go_def.keys():
-                go_def[term['id']] = term['def']
+                go_def[term['id']] = term2text(term)
             alt_ids = term.get('alt_id', [])
             for alt_id in alt_ids:
                 if alt_id in go_def and go_def[alt_id] is False:
-                    go_def[alt_id] = term['def']
+                    go_def[alt_id] = term2text(term)
         f.close()
     with open(def_path, 'w', encoding='utf-8') as f:
         with open(nodef_path, 'w', encoding='utf-8') as g:

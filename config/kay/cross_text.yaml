@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - override /data: cross_valid
+  - _self_
+
+model:
+  criterion: text
+  vnn:
+    text_dim: 768
+
+data:
+  test:
+    path: null
+    batch_size: 1024
+  train:
+    batch_size: 1024
+  val:
+    batch_size: 1024
+
+trainer:
+  save_dir: ../../../ckpt
+  lr: 2e-2
+  scheduler: Plateau

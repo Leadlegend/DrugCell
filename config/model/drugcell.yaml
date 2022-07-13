@@ -5,3 +5,4 @@ defaults:
   - _self_
 
 final_hid: 6
+criterion: default
