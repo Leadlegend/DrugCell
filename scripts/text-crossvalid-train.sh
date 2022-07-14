@@ -19,4 +19,13 @@ lazy='data.train.lazy=true data.val.lazy=true'
 notest='data.test=null'
 cf='--cfg job'
 
-python src/train.py +kay=cross_text ~data.train.path.0 ~data.val.path.0 data.test.path=$test0 $notest $save0 $c0 $output0 #> ./outputs/cross_validation0.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.0 ~data.val.path.0 data.test.path=$test0 $notest $save0 $c0 $output0 > ./outputs/cross_validation0.txt &
+
+
+#nohup python src/train.py +kay=cross_text ~data.train.path.1 ~data.val.path.1 data.test.path=$test1 $notest $save1 $c0 $output1 > ./outputs/text_cross_validation/1.txt &
+
+#nohup python src/train.py +kay=cross_text ~data.train.path.2 ~data.val.path.2 data.test.path=$test2 $notest $save2 $c1 $output2 > ./outputs/text_cross_validation/2.txt &
+
+nohup python src/train.py +kay=cross_text ~data.train.path.3 ~data.val.path.3 data.test.path=$test3 $notest $save3 $c0 $output3 > ./outputs/text_cross_validation/3.txt &
+
+nohup python src/train.py +kay=cross_text ~data.train.path.4 ~data.val.path.4 data.test.path=$test4 $notest $save4 $c0 $output4 > ./outputs/text_cross_validation/4.txt &

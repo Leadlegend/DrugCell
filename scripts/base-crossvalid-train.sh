@@ -18,12 +18,12 @@ c1='trainer.device=cuda:1'
 lazy='data.train.lazy=true data.val.lazy=true'
 notest='data.test=null'
 
-nohup python src/train.py +kay=cross ~data.train.path.0 ~data.val.path.0 data.test.path=$test0 $notest $save0 $c0 $output0 > ./outputs/cross_validation0.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.0 ~data.val.path.0 data.test.path=$test0 $notest $save0 $c0 $output0 > ./outputs/cross_validation0.txt &
 
-nohup python src/train.py +kay=cross ~data.train.path.1 ~data.val.path.1 data.test.path=$test1 $notest $save1 $c0 $output1 > ./outputs/cross_validation1.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.1 ~data.val.path.1 data.test.path=$test1 $notest $save1 $c0 $output1 > ./outputs/cross_validation1.txt &
 
-nohup python src/train.py +kay=cross ~data.train.path.2 ~data.val.path.2 data.test.path=$test2 $notest $save2 $c1 $output2 > ./outputs/cross_validation2.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.2 ~data.val.path.2 data.test.path=$test2 $notest $save2 $c1 $output2 > ./outputs/cross_validation2.txt &
 
-# nohup python src/train.py +kay=cross ~data.train.path.3 ~data.val.path.3 data.test.path=$test3 > ./outputs/cross_validation3.txt &
+nohup python src/train.py +kay=cross ~data.train.path.3 ~data.val.path.3 data.test.path=$test3 $notest $save3 $c0 $output3 > ./outputs/cross_validation3.txt &
 
-# nohup python src/train.py +kay=cross ~data.train.path.4 ~data.val.path.4 data.test.path=$test4 > ./outputs/cross_validation4.txt &
+nohup python src/train.py +kay=cross ~data.train.path.4 ~data.val.path.4 data.test.path=$test4 $notest $save4 $c0 $output4 > ./outputs/cross_validation4.txt &
