@@ -1,0 +1,5 @@
+defaults:
+  - base_drugcell
+
+name: default
+lambda_r: 0.2

@@ -107,11 +107,18 @@ class DrugConfig:
 
 
 @dataclass
+class CriterionConfig:
+    name: str  # name of the criterion function
+    lambda_r: float = 0.2
+    lambda_t: Optional[float] = 0.0
+
+
+@dataclass
 class DrugCellConfig:
     vnn: VNNConfig
     drug: DrugConfig
+    criterion: CriterionConfig
     final_hid: int = 6
-    criterion: str = 'default'
 
 
 @dataclass
@@ -134,6 +141,7 @@ def args_util():
     cs = ConfigStore.instance()
     cs.store(group='trainer', name='base_drugcell_train', node=TrainerConfig)
     cs.store(group='model', name='base_drugcell', node=DrugCellConfig)
+    cs.store(group='model/criterion', name='base_drugcell', node=CriterionConfig)
     cs.store(group='model/vnn', name='base_drugcell', node=VNNConfig)
     cs.store(group='model/drug', name='base_base', node=DrugConfig)
     cs.store(group='data', name='base_train', node=DataConfig)

@@ -4,7 +4,9 @@ defaults:
   - _self_
 
 model:
-  criterion: text
+  criterion: 
+    name: default
+    lambda_r: 0.0
   vnn:
     text_dim: 768
 
@@ -12,12 +14,17 @@ data:
   test:
     path: null
     batch_size: 1024
+    label: True
   train:
-    batch_size: 1024
+    batch_size: 3072
+    label: True
   val:
     batch_size: 1024
+    label: True
 
 trainer:
+  ckpt: ../../../ckpt/text/dc_text_v1.pt
   save_dir: ../../../ckpt
   lr: 2e-2
   scheduler: Plateau
+  epoch_criterion: spearman

@@ -1,4 +1,17 @@
 # @package _global_
+defaults:
+  - override /data: cross_valid
+  - _self_
 
 trainer:
-  optimizer: sgd
+  device: cuda:1
+
+model:
+  final_hid: 6
+
+data:
+  test: null
+  train:
+    batch_size: 1024
+  val:
+    batch_size: 1024
