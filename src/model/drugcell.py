@@ -76,7 +76,7 @@ class DrugCellModel(nn.Module):
         aux_out_map['final'] = self._modules['final_linear_layer_output'](
             aux_layer_out)
 
-        if self.crt.startswith('text'):
+        if self.crt.name.startswith('text'):
             for term, term_hidden in term_vnn_out_map.items():
                 term_text_embedding = getattr(self.vnn,
                                               '%s_text-feature' % term)
