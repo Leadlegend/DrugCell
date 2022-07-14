@@ -9,7 +9,6 @@ import networkx.algorithms.dag as nxadag
 import networkx.algorithms.components.connected as nxacc
 
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModel
 from data.tokenizer import load_vocab
 
 
@@ -33,7 +32,7 @@ class VNNModel(nn.Module):
         self.cal_term_dim(term_size_map)
         self.cal_term_mask()
         if self.num_hiddens_text > 0:
-            self.construct_text_embedding(cfg.bert)
+            self.construct_text_embedding(dG)
 
         self.contruct_direct_gene_layer()
         self.construct_vnn(dG)
@@ -171,13 +170,15 @@ class VNNModel(nn.Module):
             dG.remove_nodes_from(leaves)
 
     def construct_text_embedding(self, dG):
-        self.logger.info('Initialize torch Buffer to store text features in %s to encode text data...' % cfg.bert)
+        self.logger.info('Initialize torch Buffer to store text features of GO Term in VNN' )
 
         terms = dG.nodes()
         for term in terms:
-            term_text_data = torch.zeros(size=self.num_hiddens_text)
-            self.register_buffer('%s_text.feature'% term, term_text_data)
+            term_text_data = torch.zeros(size=[self.num_hiddens_text])
+            self.register_buffer('%s_text-feature'% term, term_text_data)
             self.add_module('%s_text_linear_layer'% term, nn.Linear(self.num_hiddens_text, self.num_hiddens_genotype))
+
+        self.logger.info('Finished buffer registration for %d terms' % len(terms))
 
     def cal_term_dim(self, term_size_map):
         """
@@ -265,4 +266,4 @@ class VNNModel(nn.Module):
                     self._modules[term+'_aux_linear_layer1'](term_NN_out_map[term]))
                 aux_out_map[term] = self._modules[term +
                                                   '_aux_linear_layer2'](aux_layer1_out)
-        return term_NN_out_map, aux_out_map
+        return aux_out_map, term_NN_out_map

@@ -51,7 +51,8 @@ class Tester:
                 output = self.model(data)
                 pred = self._out2pred(output)
                 loss = self.criterion(pred, target)
-                labels_pred, labels_gold = self._update_label(pred, target, labels_pred, labels_gold)
+                labels_pred, labels_gold = self._update_label(
+                    pred, target, labels_pred, labels_gold)
                 #self.logger.info('%s\t%s' %(labels_pred.shape, labels_gold.shape))
                 log.update({str(batch_idx): loss.item()})
 
@@ -83,8 +84,7 @@ class Tester:
             self.logger.error("Bad checkpoint path: {}".format(resume_path))
             sys.exit(1)
         self.logger.info("Loading checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path,
-                                map_location=torch.device(self.device))
+        checkpoint = torch.load(resume_path, map_location=self.device)
         # we should make resume process robust to use various kinds of ckpt
         if 'state_dict' in checkpoint:
             try:
@@ -95,6 +95,6 @@ class Tester:
                 raise ValueError
         else:
             # which means that we load the ckpt not to resume training, thus the params may not match perfectly.
-            self.model.load_state_dict(checkpoint, strict=True)
+            self.model.load_state_dict(checkpoint, strict=False)
 
         self.logger.info("Checkpoint loaded.")

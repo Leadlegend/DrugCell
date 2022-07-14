@@ -17,8 +17,7 @@ def train(cfg):
     
     trainer = DrugCellTrainer(model=model, config=cfg.trainer, device=cfg.trainer.device,
                               data_loader=train_loader, valid_data_loader=val_loader,
-                              optimizer=optim, lr_scheduler=sched,
-                              criterion=DrugCellLoss, epoch_criterion=epoch)
+                              optimizer=optim, lr_scheduler=sched, epoch_criterion=epoch)
     trainer.train()
 
 
