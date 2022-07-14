@@ -5,8 +5,9 @@ defaults:
 
 model:
   criterion: 
-    name: default
+    name: text
     lambda_r: 0.0
+    lambda_t: 0.02
   vnn:
     text_dim: 768
 

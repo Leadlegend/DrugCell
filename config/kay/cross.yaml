@@ -3,14 +3,19 @@ defaults:
   - override /data: cross_valid
   - _self_
 
+model:
+  criterion:
+    name: default
+    lambda_r: 0.0
+
 data:
-  test:
-    path: null
-    batch_size: 3072
+  test: null
   train:
-    batch_size: 3072
+    batch_size: 2048
+    label: True
   val:
-    batch_size: 256
+    batch_size: 1024
+    label: True
 
 trainer:
   save_dir: ../../../ckpt
