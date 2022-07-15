@@ -13,7 +13,7 @@ def cross_valid_test(cfg):
     test_loader = datamodule.test_dataloader()
     model = DrugCellModel(cfg.model)
     tester = DrugCellTester(model=model, config=cfg.trainer, device=cfg.trainer.device,
-                              data_loader=test_loader, criterion=cfg2crt[cfg.model.criterion], 
+                              data_loader=test_loader, criterion=cfg2crt[cfg.model.criterion.name], 
                               epoch_criterion=cfg2ep_crt.get(cfg.trainer.epoch_criterion, None))
     tester.test()
 

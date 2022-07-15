@@ -21,11 +21,11 @@ cfg2sch = {
     "Plateau":
     partial(
         opt.lr_scheduler.ReduceLROnPlateau,
-        factor=0.9,
+        factor=0.95,
         mode='min',
-        patience=9,
-        cooldown=2,
-        min_lr=2e-5,
+        patience=12,
+        cooldown=5,
+        min_lr=5e-5,
     ),
 }
 
