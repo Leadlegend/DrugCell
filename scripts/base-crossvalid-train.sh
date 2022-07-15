@@ -13,15 +13,17 @@ save1='trainer.save_dir=../../../ckpt/baseline/cv1'
 save2='trainer.save_dir=../../../ckpt/baseline/cv2'
 save3='trainer.save_dir=../../../ckpt/baseline/cv3'
 save4='trainer.save_dir=../../../ckpt/baseline/cv4'
+ckpt0='trainer.ckpt=../../../ckpt/baseline/cv0/ckpt-epoch35.pt'
+ckpt1='trainer.ckpt=../../../ckpt/baseline/cv1/ckpt-epoch35.pt'
 c0='trainer.device=cuda:0'
 c1='trainer.device=cuda:1'
 notest='data.test=null'
 
-nohup python src/train.py +kay=cross ~data.train.path.0 ~data.val.path.0 $notest $save0 $c1 $output0 > ./outputs/base_cross_validation/0.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.0 ~data.val.path.0 $notest $save0 $c1 $ckpt0 $output0 > ./outputs/base_cross_validation/0.txt &
 
-nohup python src/train.py +kay=cross ~data.train.path.1 ~data.val.path.1 $notest $save1 $c1 $output1 > ./outputs/base_cross_validation/1.txt &
+#nohup python src/train.py +kay=cross ~data.train.path.1 ~data.val.path.1 $notest $save1 $c1 $ckpt1 $output1 > ./outputs/base_cross_validation/1.txt &
 
-#nohup python src/train.py +kay=cross ~data.train.path.2 ~data.val.path.2 $notest $save2 $c1 $output2 > ./outputs/base_cross_validation/2.txt &
+nohup python src/train.py +kay=cross ~data.train.path.2 ~data.val.path.2 $notest $save2 $c0 $output2 > ./outputs/base_cross_validation/2.txt &
 
 #nohup python src/train.py +kay=cross ~data.train.path.3 ~data.val.path.3 $notest $save3 $c0 $output3 > ./outputs/base_cross_validation/3.txt &
 
