@@ -1,0 +1,32 @@
+# @package _global_
+defaults:
+  - override /data: cross_valid
+  - _self_
+
+model:
+  vnn:
+    gene_hid: 32
+  drug:
+    drug_hid:
+      - 128
+      - 64
+      - 32
+  final_hid: 32
+  criterion:
+    name: default
+    lambda_r: 0.0
+
+data:
+  test: null
+  train:
+    batch_size: 2048
+    label: True
+  val:
+    batch_size: 1024
+    label: True
+
+trainer:
+  save_dir: ../../../ckpt
+  lr: 2e-2
+  scheduler: Plateau
+  epoch_criterion: spearman
