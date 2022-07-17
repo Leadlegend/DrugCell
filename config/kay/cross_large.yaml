@@ -11,7 +11,8 @@ model:
       - 128
       - 64
       - 32
-  final_hid: 32
+  final_hid: 
+    - 32
   criterion:
     name: default
     lambda_r: 0.0

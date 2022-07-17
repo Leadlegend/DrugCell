@@ -5,4 +5,5 @@ defaults:
   - base_drugcell
   - _self_
 
-final_hid: 6
+final_hid: 
+  - 6

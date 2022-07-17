@@ -26,22 +26,25 @@ class DrugCellModel(nn.Module):
     def construct_final_linear(self):
         input_size = self.vnn.num_hiddens_genotype + \
             self.drug.num_hiddens_drug[-1]
-        for layer_index in range(len(self.num_hiddens_drug)):
-            self.add_module('final_linear_layer_%d' % (layer_index+1),
-                            nn.Linear(input_size, self.num_hiddens_drug[layer_index]))
-            self.add_module('final_batchnorm_layer_%d' % (layer_index+1),
-                            nn.BatchNorm1d(self.num_hiddens_drug[layer_index]))
-            input_size = self.num_hiddens_drug[layer_index]
+        for layer_index in range(len(self.num_hiddens_final)):
+            self.add_module(
+                'final_linear_layer_%d' % (layer_index + 1),
+                nn.Linear(input_size, self.num_hiddens_final[layer_index]))
+            self.add_module(
+                'final_batchnorm_layer_%d' % (layer_index + 1),
+                nn.BatchNorm1d(self.num_hiddens_final[layer_index]))
+            input_size = self.num_hiddens_final[layer_index]
 
         self.add_module('final_aux_linear_layer1',
-                        nn.Linear(self.num_hiddens_drug[-1], 1))
+                        nn.Linear(self.num_hiddens_final[-1], 1))
         self.add_module('final_aux_linear_layer2', nn.Linear(1, 1))
 
     def init_criterion(self):
         criterion = cfg2crt[self.crt.name]
         if self.crt.name.startswith('text'):
-            self.criterion = partial(
-                criterion, lambda_r=self.crt.lambda_r, lambda_t=self.crt.lambda_t)
+            self.criterion = partial(criterion,
+                                     lambda_r=self.crt.lambda_r,
+                                     lambda_t=self.crt.lambda_t)
         else:
             self.criterion = partial(criterion, lambda_r=self.crt.lambda_r)
 
@@ -73,7 +76,7 @@ class DrugCellModel(nn.Module):
         #aux_out_map.update(aux_drug_out_map)
         final_input = torch.cat((term_vnn_out_map[self.vnn.root], drug_out),
                                 dim=1)
-        for i in range(1, len(self.num_hiddens_drug)+1, 1):
+        for i in range(1, len(self.num_hiddens_final) + 1, 1):
             final_input = self._modules['final_linear_layer_' +
                                         str(i)](final_input)
             final_input = torch.relu_(final_input)
@@ -83,7 +86,6 @@ class DrugCellModel(nn.Module):
             self._modules['final_aux_linear_layer1'](final_input))
         aux_out_map['final'] = self._modules['final_aux_linear_layer2'](
             aux_layer1_out)
-
 
         if self.crt.name.startswith('text'):
             for term, term_hidden in term_vnn_out_map.items():
@@ -113,7 +115,7 @@ class DrugCellModel(nn.Module):
         aux_out_map.update(aux_drug_out_map)
         final_input = torch.cat((term_vnn_out_map[self.vnn.root], drug_out),
                                 dim=1)
-        for i in range(1, len(self.num_hiddens_drug)+1, 1):
+        for i in range(1, len(self.num_hiddens_final) + 1, 1):
             final_input = self._modules['final_linear_layer_' +
                                         str(i)](final_input)
             final_input = torch.relu_(final_input)
@@ -121,7 +123,7 @@ class DrugCellModel(nn.Module):
                                         str(i)](final_input)
         aux_layer1_out = torch.tanh(
             self._modules['final_aux_linear_layer1'](final_input))
-        aux_out_map['final'] = self._modules['final_aux_linear_layer2'](aux_layer1_out)
-
+        aux_out_map['final'] = self._modules['final_aux_linear_layer2'](
+            aux_layer1_out)
 
         return aux_out_map, term_NN_out_map

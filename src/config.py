@@ -9,7 +9,6 @@ from hydra.core.config_store import ConfigStore
 
 from model.criterions import *
 
-
 cfg2opt = {
     "adam": partial(opt.Adam, betas=(0.9, 0.99), eps=1e-05),
     "sgd": opt.SGD,
@@ -118,7 +117,7 @@ class DrugCellConfig:
     vnn: VNNConfig
     drug: DrugConfig
     criterion: CriterionConfig
-    final_hid: List[int] = 6
+    final_hid: List[int]
 
 
 @dataclass
@@ -141,7 +140,9 @@ def args_util():
     cs = ConfigStore.instance()
     cs.store(group='trainer', name='base_drugcell_train', node=TrainerConfig)
     cs.store(group='model', name='base_drugcell', node=DrugCellConfig)
-    cs.store(group='model/criterion', name='base_drugcell', node=CriterionConfig)
+    cs.store(group='model/criterion',
+             name='base_drugcell',
+             node=CriterionConfig)
     cs.store(group='model/vnn', name='base_drugcell', node=VNNConfig)
     cs.store(group='model/drug', name='base_base', node=DrugConfig)
     cs.store(group='data', name='base_train', node=DataConfig)
