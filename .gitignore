@@ -10,3 +10,4 @@ configs/
 data/cross_valid/
 .vscode
 data/raw
+scripts/test.sh
