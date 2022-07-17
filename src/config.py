@@ -118,7 +118,7 @@ class DrugCellConfig:
     vnn: VNNConfig
     drug: DrugConfig
     criterion: CriterionConfig
-    final_hid: int = 6
+    final_hid: List[int] = 6
 
 
 @dataclass
