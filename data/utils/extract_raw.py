@@ -1,13 +1,17 @@
+import re
 import json
 from tqdm import tqdm
+from nltk.tokenize import sent_tokenize
 from collections import defaultdict, OrderedDict
 
-
 class GeneOntologyReader(object):
-
     def __init__(self, path):
         self.path = path
-        self.total = []
+        self.total = list()
+        self.read_storage_data()
+
+    def __len__(self):
+        return len(self.total)
 
     def read_storage_data(self):
         gt = defaultdict(list)
@@ -97,6 +101,81 @@ def text_analyzer(go_path, graph_path, def_path, nodef_path):
         f.close()
 
 
+def check_article(line):
+    return len(line) > 10 and line[9] == 'a'
+
+
+def test(src_path, dst_path):
+    f = open(src_path, 'r', encoding='utf-8')
+    g = open(dst_path, 'w', encoding='utf-8')
+    for idx in tqdm(range(356922799)):
+        line = f.readline()
+        if check_article(line):
+            g.write(line[11:])
+
+
+def iter_count(file_name):
+    from itertools import (takewhile, repeat)
+    buffer = 1024 * 1024
+    with open(file_name) as f:
+        buf_gen = takewhile(lambda x: x, (f.read(buffer)
+                            for _ in repeat(None)))
+        return sum(buf.count('\n') for buf in buf_gen)
+
+
+def art2sent(src_path, dst_path, file_len=20116988):
+    f = open(src_path, 'r', encoding='utf-8')
+    g = open(dst_path, 'w', encoding='utf-8')
+    for i in tqdm(range(file_len)):
+        art = f.readline().strip()
+        if not len(art):
+            continue
+        sentences = sent_tokenize(art)
+        sentences = [clear_sent(s) for s in sentences]
+        if i <= 5:
+            for sent in sentences:
+                print(sent)
+        res = '\n'.join(sentences)
+        res += '\n'
+        g.write(res)
+
+
+p = re.compile(r'[(](.*?)[)]', re.S)
+def clear_sent(s):
+    s = re.sub(p, '', s)
+    s = s.replace('\t', ' ').replace(
+        '    ', ' ').replace('   ', ' ').replace('  ', ' ')
+    return s
+
+
+def clear_article():
+    src = '/Users/iris/Documents/pku/research/Drugcell/data/raw/article.txt'
+    dst = '/Users/iris/Documents/pku/research/Drugcell/data/raw/sent2.txt'
+    #line_num = iter_count(src)
+    #print(line_num)
+    #art2sent(src, dst, line_num)
+    art2sent(src, dst)
+
+
+def term2keyword(src_path, dst_path):
+    f = open(src_path, 'r', encoding='utf-8')
+    g = open(dst_path, 'w', encoding='utf-8')
+    for line in tqdm(f.readlines()):
+        term = json.loads(line.strip())
+        keyword = set()
+        keyword.add(term['name'])
+        keyword.update(term.get('synonym', []))
+        res = {'id': term['id'], 'keyword': list(keyword)}
+        res = json.dumps(res) + '\n'
+        g.write(res)
+
+
 if __name__ == '__main__':
+    """"""
+    print(iter_count(
+        'data/raw/sent.txt'))
+    #test('/Users/iris/Documents/pku/research/Drugcell/data/raw/bioconcepts2pubtator_offsets.txt', 'article.txt')
+    
+    #clear_article()
     #transfer_obo2json(src_path='data/raw/gotext_raw.txt', dst_path='data/go_text/gene_ontology.txt')
-    text_analyzer(go_path='data/go_text/gene_ontology.txt', graph_path='data/drugcell_ont.txt', def_path='data/go_text/definition.txt', nodef_path='data/go_text/nodef.txt')
+    #text_analyzer(go_path='data/go_text/gene_ontology.txt', graph_path='data/drugcell_ont.txt', def_path='data/go_text/definition.txt', nodef_path='data/go_text/nodef.txt')
