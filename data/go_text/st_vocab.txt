@@ -1,0 +1,12 @@
+[unk]
+MAP
+ET
+NOR
+ER
+HR
+FAST
+GAS
+PurE
+ResT
+NET
+AS
