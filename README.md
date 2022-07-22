@@ -2,6 +2,75 @@
 
 This is an reproduction version of DrugCell Neural Network to better fit for experiment setup and further research.
 
+## Project Structure
+
+```tree
+.
+├── LICENSE
+├── README.md
+├── README_old.md
+├── ckpt                         # directory for storing checkpoint of models
+│   └── transfer.py              # program that can tranfer original drugcell model ckpt into ours
+├── config                       # directory for Hydra to set up experimental configuration
+│   ├── base.yaml
+│   ├── cross_valid_test.yaml
+│   ├── data
+│   ├── kay
+│   ├── logger
+│   ├── model
+│   └── trainer
+├── data                         # directory for training and test dataset
+│   ├── cell2ind.txt
+│   ├── cell2mutation.txt
+│   ├── cell2mutation_fixed.txt
+│   ├── cell2mutation_float.txt
+│   ├── compound_names.txt
+│   ├── cross_valid              # 5-split of drugcell_all.txt, used for 5-fold cross validation
+│   ├── drug2fingerprint.txt
+│   ├── drug2ind.txt
+│   ├── drugcell_all.txt         # overall dataset for drugcell, with data quantity around 53k
+│   ├── drugcell_ont.txt         # directed graph data for building VNN in DrugCell
+│   ├── gene2ind.txt
+│   ├── go_text                  # text data and feature in GO
+│   └── utils
+├── outputs                      # outputs of experiments, including log and configuration record
+├── scripts
+│   ├── base-crossvalid-test.sh
+│   ├── base-crossvalid-train.sh
+│   ├── split_data.sh
+│   ├── text-crossvalid-test.sh
+│   └── text-crossvalid-train.sh
+├── src                          # source code of DrugCell
+│   ├── config.py                # config loading module based on Hydra
+│   ├── test.py                  # main interface for model testing
+│   ├── train.py                 # main interface for model training
+│   ├── data                     # data processing module
+│   │   ├── __init__.py
+│   │   ├── collate_fn.py
+│   │   ├── datamodule.py
+│   │   ├── dataset.py
+│   │   └── tokenizer.py
+│   ├── logger                   # logger initialization module
+│   │   ├── __init__.py
+│   │   ├── config.json
+│   │   └── logger.py
+│   ├── model                    # model and criterions
+│   │   ├── __init__.py
+│   │   ├── criterions.py
+│   │   ├── drug.py
+│   │   ├── drugcell.py
+│   │   └── vnn.py
+│   ├── tester                   # trainer for model testing
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   └── drugcell.py
+│   └── trainer                  # trainer for model training
+│       ├── __init__.py
+│       ├── base.py
+│       └── drugcell.py
+└── test
+```
+
 ## Dependency
 
 This repo additionally depends on the following packages of python:
