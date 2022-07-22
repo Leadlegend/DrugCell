@@ -80,13 +80,16 @@ class Sentence:
     sent_id: int
     sent: str
 
-    def _init_sent(self, tokenizer: Tokenizer):
+    def _init_sent(self, tokenizer: Tokenizer, gram_num: int = -1):
         self.sent = tokenizer(self.sent)
         self.flag = sum(self.sent) > 0
         self.grams = dict()
         if not self.flag:
             return self.flag
-        self.max_n = min(max_N, len(self.sent))
+        if not gram_num > 0:
+            self.max_n = min(max_N, len(self.sent))
+        else:
+            self.max_n = min(gram_num, len(self.sent))
         for i in range(1, self.max_n+1):
             self._generate_ngrams(i)
         return self.flag
@@ -101,53 +104,12 @@ class Sentence:
         self.sent.clear()
 
 
-class Searcher:
-    def __init__(self, tokenizer: Tokenizer, keywords: str):
-        self.tokenizer = tokenizer
-        self.keywords = keywords
-        self.recorder = []
-        self._init_keys()
-
-    def _init_keys(self):
-        print("initializing keywords in %s" % self.keywords)
-        with open(self.keywords, 'r') as f:
-            keys = set()
-            for line in tqdm(f.readlines()):
-                data = json.loads(line.strip())
-                for k in data['keyword']:
-                    tt = tuple(self.tokenizer(k.lower()))
-                    keys.add(tt)
-            self.keywords = keys
-
-    @property
-    def num_keyword(self):
-        return len(self.keywords)
-
-    def search(self, sentence: str, sent_id: int = -1):
-        sentence = Sentence(sent_id, sentence)
-        flag = sentence._init_sent(self.tokenizer)
-
-        if flag is False:
-            return 0
-        for n, gram_set in sentence.grams.items():
-            for gram in gram_set:
-                if gram in self.keywords:
-                    self.recorder.append(sent_id)
-                    return 1
-
-    def print_result(self, path):
-        with open(path, 'w', encoding='utf-8') as f:
-            s = [str(x) for x in self.recorder]
-            res = '\n'.join(s)
-            f.write(res)
-            f.close()
-
-
 class BetterSearcher:
     def __init__(self, tokenizer: Tokenizer, keywords: str):
         self.tokenizer = tokenizer
         self.keywords = keywords
-        self._init_keys()
+        if isinstance(keywords, str):
+            self._init_keys()
 
     def _init_keys(self):
         print("initializing keywords in %s" % self.keywords)
@@ -165,9 +127,9 @@ class BetterSearcher:
     def num_keyword(self):
         return len(self.keywords)
 
-    def search(self, sentence: str, sent_id: int = -1):
+    def search(self, sentence: str, sent_id: int = -1, grams: int = -1):
         sentence = Sentence(sent_id, sentence)
-        flag = sentence._init_sent(self.tokenizer)
+        flag = sentence._init_sent(self.tokenizer, gram_num=grams)
 
         if flag is False:
             return 0
@@ -194,7 +156,7 @@ def search():
     vocab_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/key_vocab.txt'
     keyword_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/keyword.txt'
     sent_path = '/Users/iris/Documents/pku/research/Drugcell/data/raw/sent.txt'
-    output_path = './res.json'
+    output_path = './st_res.json'
     sent_num = 128685807
 
     tk = Tokenizer(vocab_path, has_index=False)
@@ -202,47 +164,39 @@ def search():
     with open(sent_path, 'r', encoding='utf-8') as f:
         for idx in tqdm(range(sent_num)):
             sent = f.readline().strip().lower()
-            searcher.search(sent, idx)
-            if not idx % 1000000:
+            searcher.search(sent, idx, 1)
+            if not idx % 5000000:
                 searcher.print_result(path=output_path)
                 print('saved checkpoints after finishing %d sentences' % idx)
 
         searcher.print_result(path=output_path)
+        print("finished!")
 
 
-def classify(path):
-    keyword_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/keyword.txt'
-    output_path1 = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/term2line.json'
-    output_path2 = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/term2num.json'
+def stop_word_sreach():
+    vocab_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/st_vocab.txt'
+    sent_path = '/Users/iris/Documents/pku/research/Drugcell/data/raw/sent.txt'
+    output_path = './st_res.json'
+    sent_num = 128685807
 
-    g = open(keyword_path, 'r', encoding='utf-8')
-    f = open(path, 'r', encoding='utf-8')
-    data = json.load(f)
-    res = collections.defaultdict(set)
-    for line in tqdm(g.readlines()):
-        term = json.loads(line.strip())
-        keywords = [k.lower() for k in term['keyword']]
-        keys = list(data.keys())
-        for key in keys:
-            if key in keywords:
-                res[term['id']].update(data[key])
-                data.pop(key)
-    f.close()
-    g.close()
-    term_line = {key: list(val) for key, val in res.items()}
-    term_num = {key: len(val) for key, val in res.items()}
-    res_line = json.dumps(term_line, indent=2, sort_keys=True)
-    res_num = json.dumps(term_num, indent=2, sort_keys=True)
-    f = open(output_path1, 'w', encoding='utf-8')
-    g = open(output_path2, 'w', encoding='utf-8')
-    f.write(res_line)
-    g.write(res_num)
-    f.close()
-    g.close()
-    term_num = {k: v for k, v in term_num.items() if v > 0}
-    print(len(term_num))
+    tk = Tokenizer(vocab_path, has_index=False)
+    keyword = dict()
+    for key in tk.vocab.keys():
+        if key != '[unk]':
+            keyword[key] = list()
+    searcher = BetterSearcher(tk, keyword)
+    with open(sent_path, 'r', encoding='utf-8') as f:
+        for idx in tqdm(range(sent_num)):
+            sent = f.readline().strip()
+            searcher.search(sent, idx, 1)
+            if not idx % 5000000:
+                searcher.print_result(path=output_path)
+                print('saved checkpoints after finishing %d sentences' % idx)
+
+        searcher.print_result(path=output_path)
+        print("finished!")
 
 
 if __name__ == '__main__':
     # search()
-    classify(path='./res.json')
+    stop_word_sreach()
