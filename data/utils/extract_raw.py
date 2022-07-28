@@ -4,6 +4,7 @@ from tqdm import tqdm
 from nltk.tokenize import sent_tokenize
 from collections import defaultdict, OrderedDict
 
+
 class GeneOntologyReader(object):
     def __init__(self, path):
         self.path = path
@@ -141,6 +142,8 @@ def art2sent(src_path, dst_path, file_len=20116988):
 
 
 p = re.compile(r'[(](.*?)[)]', re.S)
+
+
 def clear_sent(s):
     s = re.sub(p, '', s)
     s = s.replace('\t', ' ').replace(
@@ -152,7 +155,7 @@ def clear_article():
     src = '/Users/iris/Documents/pku/research/Drugcell/data/raw/article.txt'
     dst = '/Users/iris/Documents/pku/research/Drugcell/data/raw/sent2.txt'
     #line_num = iter_count(src)
-    #print(line_num)
+    # print(line_num)
     #art2sent(src, dst, line_num)
     art2sent(src, dst)
 
@@ -162,20 +165,26 @@ def term2keyword(src_path, dst_path):
     g = open(dst_path, 'w', encoding='utf-8')
     for line in tqdm(f.readlines()):
         term = json.loads(line.strip())
+        if term['name'].startswith('obsolete '):
+            continue
         keyword = set()
         keyword.add(term['name'])
         keyword.update(term.get('synonym', []))
-        res = {'id': term['id'], 'keyword': list(keyword)}
+        res = {'id': term['id'], 'name': term['name'],
+               'keyword': list(keyword)}
         res = json.dumps(res) + '\n'
         g.write(res)
 
 
 if __name__ == '__main__':
-    """"""
+    """
     print(iter_count(
         'data/raw/sent.txt'))
+        """
+    term2keyword(src_path='data/go_text/gene_ontology.txt',
+                 dst_path='data/go_text/keyword.txt')
     #test('/Users/iris/Documents/pku/research/Drugcell/data/raw/bioconcepts2pubtator_offsets.txt', 'article.txt')
-    
-    #clear_article()
+
+    # clear_article()
     #transfer_obo2json(src_path='data/raw/gotext_raw.txt', dst_path='data/go_text/gene_ontology.txt')
     #text_analyzer(go_path='data/go_text/gene_ontology.txt', graph_path='data/drugcell_ont.txt', def_path='data/go_text/definition.txt', nodef_path='data/go_text/nodef.txt')
