@@ -4,17 +4,13 @@ defaults:
   - _self_
 
 model:
-  vnn:
-    gene_hid: 32
-  drug:
-    drug_hid:
-      - 50
-      - 10
-      - 6
-  final_hid: 32
-  criterion:
-    name: default
+  criterion: 
+    name: text
     lambda_r: 0.0
+    lambda_t: 0.02
+  vnn:
+    text_dim: 768
+    text_terms: ../../../data/go_text/vnn_non-zero.txt
 
 data:
   test: null
@@ -27,6 +23,7 @@ data:
 
 trainer:
   epoch: 100
+  ckpt: ../../../ckpt/text/dc_text_v2.pt
   save_dir: ../../../ckpt
   lr: 2e-2
   scheduler: Plateau

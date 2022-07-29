@@ -10,7 +10,6 @@ model:
   final_hid: 6
 
 data:
-  test: null
   train:
     batch_size: 1024
   val:
