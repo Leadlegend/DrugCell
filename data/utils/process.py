@@ -20,7 +20,6 @@ def classify(path, keyword_path, output_path1, output_path2, output_path3, st_pa
         for key in keys:
             if key in keywords:
                 res[term['name']].update(data[key])
-                data.pop(key)
     f.close()
     g.close()
 
@@ -48,19 +47,21 @@ def classify(path, keyword_path, output_path1, output_path2, output_path3, st_pa
 
     res_line = json.dumps(term_line, indent=2, sort_keys=True)
     res_num = json.dumps(term_num, indent=2, sort_keys=True)
-    term_num = [(k, v) for k, v in term_num.items()]
-    term_num.sort(key=lambda x: x[1], reverse=True)
-    res_num_txt = ["%s\t%s" % (x[0], x[1]) for x in term_num]
-    res_num_txt = '\n'.join(res_num_txt)
     f = open(output_path1, 'w', encoding='utf-8')
     g = open(output_path2, 'w', encoding='utf-8')
-    h = open(output_path3, 'w', encoding='utf-8')
+    if output_path3 is not None:
+        term_num = [(k, v) for k, v in term_num.items()]
+        term_num.sort(key=lambda x: x[1], reverse=True)
+        res_num_txt = ["%s\t%s" % (x[0], x[1]) for x in term_num]
+        res_num_txt = '\n'.join(res_num_txt)
+        h = open(output_path3, 'w', encoding='utf-8')
+        h.write(res_num_txt)
+        h.close()
+
     f.write(res_line)
     g.write(res_num)
-    h.write(res_num_txt)
     f.close()
     g.close()
-    h.close()
 
 
 def raw2txt(path, dst_path):
@@ -113,13 +114,13 @@ if __name__ == '__main__':
     path = './res.json'
     st_path = './st_res.json'
     dst_path = './res.txt'
-    go_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/gene_ontology.txt'
+    go_path = '/data/kaixin/drugcell/data/go_text/gene_ontology.txt'
 
-    keyword_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/keyword.txt'
-    output_path1 = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/term2line.json'
-    output_path2 = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/term2num.json'
-    output_path3 = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/term2num.txt'
-    vocab_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/st_vocab.txt'
+    keyword_path = '/data/kaixin/drugcell/data/go_text/keyword.txt'
+    output_path1 = '/data/kaixin/drugcell/data/raw/term2line.json'
+    output_path2 = '/data/kaixin/drugcell/data/raw/term2num.json'
+    output_path3 = '/data/kaixin/drugcell/data/raw/term2num.txt'
+    vocab_path = '/data/kaixin/drugcell/data/raw/st_vocab.txt'
     classify(path, keyword_path, output_path1, output_path2, output_path3)
     #raw2txt(path, dst_path)
     #generate_stop_vocab(vocab_path, keyword_path)

@@ -29,7 +29,7 @@ def show_vnn_terms(vnn_path, vnn_term_path):
     g.close()
 
 
-def show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path):
+def show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path, vnn_nonzero_path=None):
     f = open(t2n_path, 'r', encoding='utf-8')
     g = open(go_path, 'r', encoding='utf-8')
     vnn_ids = [
@@ -50,6 +50,10 @@ def show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path):
     non_zero = 0
     num_sum = 0
     vnn_infos = list()
+
+    if vnn_nonzero_path is not None:
+        k = open(vnn_nonzero_path, 'w', encoding='utf-8')
+
     for vnn_id in vnn_ids:
         if vnn_id not in id2term:
             print('Term %s is obsolete' % vnn_id)
@@ -64,6 +68,8 @@ def show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path):
         if term_num > 0:
             non_zero = non_zero + 1
             num_sum += term_num
+            if vnn_nonzero_path is not None:
+                k.write(vnn_id + '\n')
 
     vnn_infos.sort(key=lambda x: x[1], reverse=True)
     vnn_infos = ["%s\t%s" % (x[0], x[1]) for x in vnn_infos]
@@ -101,8 +107,8 @@ def record_vnn_termname(vnn_term_path, go_path, output_path):
 
 def main():
     #show_vnn_terms(go_path, vnn_path)
-    #show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path)
-    record_vnn_termname(vnn_term_path, go_path, output_path=vnn_info_path)
+    show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path, vnn_nonzero_path)
+    #record_vnn_termname(vnn_term_path, go_path, output_path=vnn_info_path)
 
 
 if __name__ == '__main__':
