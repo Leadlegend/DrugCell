@@ -36,7 +36,8 @@ class DrugCellModel(nn.Module):
     def init_criterion(self):
         criterion = cfg2crt[self.crt.name]
         if self.crt.name.startswith('text'):
-            self.criterion = partial(criterion, lambda_r=self.crt.lambda_r, lambda_t=self.crt.lambda_t)
+            self.criterion = partial(
+                criterion, lambda_r=self.crt.lambda_r, lambda_t=self.crt.lambda_t)
         else:
             self.criterion = partial(criterion, lambda_r=self.crt.lambda_r)
 
@@ -79,7 +80,9 @@ class DrugCellModel(nn.Module):
         if self.crt.name.startswith('text'):
             for term, term_hidden in term_vnn_out_map.items():
                 term_text_embedding = getattr(self.vnn,
-                                              '%s_text-feature' % term)
+                                              '%s_text-feature' % term, default=None)
+                if term_text_embedding is None:
+                    continue
                 term_text_hidden = self.vnn._modules['%s_text_linear_layer' %
                                                      term](term_text_embedding)
                 term_text_hidden = torch.tanh(term_text_hidden) - term_hidden
