@@ -40,8 +40,9 @@ def kriss2text_ver2(src_path, vnn_info, dst_path='./ckpt/dc_text_v2.pt', embed_s
             ids = meta['cuis']
             embeddings = torch.from_numpy(data)
             for go_id in ids:
-                tmp_ckpt[go_id] += embeddings
-                term_num += 1
+                if go_id in terms:
+                    tmp_ckpt[go_id] += embeddings
+                    term_num[go_id] += 1
 
         res = 0
         for key in term_num.keys():
@@ -54,7 +55,7 @@ def kriss2text_ver2(src_path, vnn_info, dst_path='./ckpt/dc_text_v2.pt', embed_s
                 continue
         torch.save(ckpt, dst_path)
         print('There are %d in %d terms has embeddings' %
-              (res, len(terms_num)))
+              (res, len(term_num)))
 
 
 def get_terms(vnn_info):
