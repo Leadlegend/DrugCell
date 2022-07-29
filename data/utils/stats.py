@@ -29,10 +29,13 @@ def show_vnn_terms(vnn_path, vnn_term_path):
     g.close()
 
 
-def show_vnn_info(t2n_path, keyword_path, vnn_path, vnn_stats_path):
+def show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path):
     f = open(t2n_path, 'r', encoding='utf-8')
     g = open(go_path, 'r', encoding='utf-8')
-    vnn_ids = [line.strip() for line in open(vnn_term_path, 'r', encoding='utf-8').readlines()]
+    vnn_ids = [
+        line.strip()
+        for line in open(vnn_term_path, 'r', encoding='utf-8')
+    ]
     term2num = json.load(f)
     id2term = dict()
     for line in g.readlines():
@@ -41,7 +44,7 @@ def show_vnn_info(t2n_path, keyword_path, vnn_path, vnn_stats_path):
         alt_ids = data.get('alt_id', [])
         for alt_id in alt_ids:
             id2term[alt_id] = data['name']
-
+    f.close()
     g.close()
 
     non_zero = 0
@@ -63,17 +66,43 @@ def show_vnn_info(t2n_path, keyword_path, vnn_path, vnn_stats_path):
             num_sum += term_num
 
     vnn_infos.sort(key=lambda x: x[1], reverse=True)
-    vnn_infos = ["%s\t%s" %(x[0], x[1]) for x in vnn_infos]
-    print('There are %d non-zero terms in %d VNN terms' %(non_zero, len(vnn_infos)))
+    vnn_infos = ["%s\t%s" % (x[0], x[1]) for x in vnn_infos]
+    print('There are %d non-zero terms in %d VNN terms' %
+          (non_zero, len(vnn_infos)))
     print("The average number of mention is %f" % (num_sum / len(vnn_infos)))
-    res = '\n'.join(vnn_infos)
-    h = open(vnn_stats_path, 'w', encoding='utf-8')
-    h.write(res)
-        
+    if vnn_stats_path is not None:
+        res = '\n'.join(vnn_infos)
+        h = open(vnn_stats_path, 'w', encoding='utf-8')
+        h.write(res)
+        h.close()
+
+
+def record_vnn_termname(vnn_term_path, go_path, output_path):
+    f = open(output_path, 'w', encoding='utf-8')
+    g = open(go_path, 'r', encoding='utf-8')
+    vnn_ids = [
+        line.strip()
+        for line in open(vnn_term_path, 'r', encoding='utf-8')
+    ]
+    id2term = dict()
+    for line in g.readlines():
+        data = json.loads(line.strip())
+        id2term[data['id']] = data['name']
+        alt_ids = data.get('alt_id', [])
+        for alt_id in alt_ids:
+            id2term[alt_id] = data['name']
+    g.close()
+    
+    vnn_info = defaultdict(list)
+    for vnn_id in vnn_ids:
+        vnn_info[id2term[vnn_id]].append(vnn_id)
+    
+    f.write(json.dumps(vnn_info, indent=4, sort_keys=True))
 
 def main():
     #show_vnn_terms(go_path, vnn_path)
-    show_vnn_info(t2n_path, keyword_path, vnn_path, vnn_stats_path)
+    #show_vnn_info(t2n_path, go_path, vnn_term_path, vnn_stats_path)
+    record_vnn_termname(vnn_term_path, go_path, output_path=vnn_info_path)
 
 
 if __name__ == '__main__':
