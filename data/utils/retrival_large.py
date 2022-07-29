@@ -153,10 +153,10 @@ max_N = 25
 
 
 def search():
-    vocab_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/key_vocab.txt'
+    vocab_path = '/Users/iris/Documents/pku/research/Drugcell/data/raw/key_vocab.txt'
     keyword_path = '/Users/iris/Documents/pku/research/Drugcell/data/go_text/keyword.txt'
     sent_path = '/Users/iris/Documents/pku/research/Drugcell/data/raw/sent.txt'
-    output_path = './st_res.json'
+    output_path = './res.json'
     sent_num = 128685807
 
     tk = Tokenizer(vocab_path, has_index=False)
@@ -164,8 +164,8 @@ def search():
     with open(sent_path, 'r', encoding='utf-8') as f:
         for idx in tqdm(range(sent_num)):
             sent = f.readline().strip().lower()
-            searcher.search(sent, idx, 1)
-            if not idx % 5000000:
+            searcher.search(sent, idx)
+            if not idx % 10000000:
                 searcher.print_result(path=output_path)
                 print('saved checkpoints after finishing %d sentences' % idx)
 
@@ -198,5 +198,5 @@ def stop_word_sreach():
 
 
 if __name__ == '__main__':
-    # search()
-    stop_word_sreach()
+    search()
+    # stop_word_sreach()
