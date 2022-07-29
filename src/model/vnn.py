@@ -13,6 +13,7 @@ from data.tokenizer import load_vocab
 
 
 class VNNModel(nn.Module):
+
     def __init__(self, cfg):
         super(VNNModel, self).__init__()
         self.num_hiddens_genotype = cfg.gene_hid
@@ -32,7 +33,7 @@ class VNNModel(nn.Module):
         self.cal_term_dim(term_size_map)
         self.cal_term_mask()
         if self.num_hiddens_text > 0:
-            self.construct_text_embedding(dG)
+            self.construct_text_embedding(dG, cfg.text_terms)
 
         self.contruct_direct_gene_layer()
         self.construct_vnn(dG)
@@ -94,11 +95,13 @@ class VNNModel(nn.Module):
         self.logger.info('There are %d roots: %s' % (len(leaves), leaves[0]))
         if len(leaves) > 1:
             self.logger.error(
-                'There are more than 1 root of ontology. Please use only one root.')
+                'There are more than 1 root of ontology. Please use only one root.'
+            )
             sys.exit(1)
         if len(connected_subG_list) > 1:
             self.logger.error(
-                'There are more than connected components. Please connect them.')
+                'There are more than connected components. Please connect them.'
+            )
             sys.exit(1)
         return dG, leaves[0], term_size_map, term_direct_gene_map
 
@@ -113,13 +116,10 @@ class VNNModel(nn.Module):
         feature = np.genfromtxt(embed_path, delimiter=',', dtype=np.float32)
         embedding_weights = torch.from_numpy(feature)
         embed_size, num_gene = embedding_weights.shape
-        embedding = nn.Embedding(
-            num_embeddings=embed_size,
-            embedding_dim=num_gene,
-            padding_idx=None).from_pretrained(
-            embeddings=embedding_weights,
-            freeze=True
-        )
+        embedding = nn.Embedding(num_embeddings=embed_size,
+                                 embedding_dim=num_gene,
+                                 padding_idx=None).from_pretrained(
+                                     embeddings=embedding_weights, freeze=True)
         return embedding, num_gene, embed_size
 
     def contruct_direct_gene_layer(self):
@@ -131,7 +131,7 @@ class VNNModel(nn.Module):
                 sys.exit(1)
             # if there are some genes directly annotated with the term
             # add a layer taking in all genes and forwarding out only those genes
-            self.add_module(term+'_direct_gene_layer',
+            self.add_module(term + '_direct_gene_layer',
                             nn.Linear(self.gene_dim, len(gene_set)))
 
     # start from bottom (leaves), and start building a neural network using the given ontology
@@ -160,25 +160,38 @@ class VNNModel(nn.Module):
                     input_size += len(self.term_direct_gene_map[term])
                 # term_hidden is the number of the hidden variables in each state
                 term_hidden = self.term_dim_map[term]
-                self.add_module(term+'_linear_layer',
+                self.add_module(term + '_linear_layer',
                                 nn.Linear(input_size, term_hidden))
-                self.add_module(term+'_batchnorm_layer',
+                self.add_module(term + '_batchnorm_layer',
                                 nn.BatchNorm1d(term_hidden))
-                self.add_module(term+'_aux_linear_layer1',
+                self.add_module(term + '_aux_linear_layer1',
                                 nn.Linear(term_hidden, 1))
-                self.add_module(term+'_aux_linear_layer2', nn.Linear(1, 1))
+                self.add_module(term + '_aux_linear_layer2', nn.Linear(1, 1))
             dG.remove_nodes_from(leaves)
 
-    def construct_text_embedding(self, dG):
-        self.logger.info('Initialize torch Buffer to store text features of GO Term in VNN' )
-
+    def construct_text_embedding(self, dG, text_terms_path):
         terms = dG.nodes()
+
+        if text_terms_path is not None:
+            text_terms = [
+                line.strip() for line in open(text_terms_path, 'r')
+                if len(line.strip())
+            ]
+            text_terms = set(text_terms)
+            terms = [term for term in terms if term in text_terms]
+
+        self.logger.info(
+            'Initialize %d Buffer to store text features of GO Term in VNN' %
+            len(terms))
         for term in terms:
             term_text_data = torch.zeros(size=[self.num_hiddens_text])
-            self.register_buffer('%s_text-feature'% term, term_text_data)
-            self.add_module('%s_text_linear_layer'% term, nn.Linear(self.num_hiddens_text, self.num_hiddens_genotype))
+            self.register_buffer('%s_text-feature' % term, term_text_data)
+            self.add_module(
+                '%s_text_linear_layer' % term,
+                nn.Linear(self.num_hiddens_text, self.num_hiddens_genotype))
 
-        self.logger.info('Finished buffer registration for %d terms' % len(terms))
+        self.logger.info('Finished buffer registration for %d terms' %
+                         len(terms))
 
     def cal_term_dim(self, term_size_map):
         """
@@ -224,8 +237,8 @@ class VNNModel(nn.Module):
             if '_direct_gene_layer.weight' not in name:
                 continue
             term = name.split('_')[0]
-            param.grad.data = torch.mul(
-                param.grad.data, self.term_mask_map[term])
+            param.grad.data = torch.mul(param.grad.data,
+                                        self.term_mask_map[term])
 
     def forward(self, gene_input):
         """
@@ -240,8 +253,8 @@ class VNNModel(nn.Module):
         # (batch_size, enbed_size)
 
         for term in self.term_direct_gene_map.keys():
-            term_gene_out_map[term] = self._modules[term +
-                                                    '_direct_gene_layer'](gene_embedded)
+            term_gene_out_map[term] = self._modules[
+                term + '_direct_gene_layer'](gene_embedded)
             # For each term,
 
         for i, layer in enumerate(self.term_layers):
@@ -259,11 +272,12 @@ class VNNModel(nn.Module):
                                                 '_linear_layer'](child_input)
 
                 term_Tanh_out = torch.tanh(term_linear_out)
-                term_NN_out_map[term] = self._modules[term +
-                                                      '_batchnorm_layer'](term_Tanh_out)
+                term_NN_out_map[term] = self._modules[
+                    term + '_batchnorm_layer'](term_Tanh_out)
                 # self.logger.debug(term_NN_out_map[term].shape)
                 aux_layer1_out = torch.tanh(
-                    self._modules[term+'_aux_linear_layer1'](term_NN_out_map[term]))
-                aux_out_map[term] = self._modules[term +
-                                                  '_aux_linear_layer2'](aux_layer1_out)
+                    self._modules[term + '_aux_linear_layer1'](
+                        term_NN_out_map[term]))
+                aux_out_map[term] = self._modules[term + '_aux_linear_layer2'](
+                    aux_layer1_out)
         return aux_out_map, term_NN_out_map

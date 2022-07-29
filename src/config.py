@@ -97,8 +97,8 @@ class VNNConfig:
     gene2idx: str  # path of gene2idx file
     cell_embed: str  # path of cell2mutation file
     gene_hid: int = 6  # number of Neuron corresponding to a term
-    text_dim: int = 768
-
+    text_dim: Optional[int] = 768
+    text_terms: Optional[str] = None
 
 @dataclass
 class DrugConfig:
