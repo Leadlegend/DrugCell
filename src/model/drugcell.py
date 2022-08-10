@@ -80,7 +80,7 @@ class DrugCellModel(nn.Module):
         if self.crt.name.startswith('text'):
             for term, term_hidden in term_vnn_out_map.items():
                 term_text_embedding = getattr(self.vnn,
-                                              '%s_text-feature' % term, default=None)
+                                              '%s_text-feature' % term, None)
                 if term_text_embedding is None:
                     continue
                 term_text_hidden = self.vnn._modules['%s_text_linear_layer' %
