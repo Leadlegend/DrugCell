@@ -18,7 +18,7 @@
         },
         "info_file_handler": {
             "class": "logging.handlers.RotatingFileHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "datetime",
             "filename": "train.log",
             "maxBytes": 10485760,
