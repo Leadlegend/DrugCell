@@ -5,3 +5,5 @@ onto: ../../../data/drugcell_ont.txt
 gene2idx: ../../../data/gene2ind.txt
 cell_embed: ../../../data/cell2mutation.txt
 gene_hid: 6
+text_dim: null
+text_terms: null

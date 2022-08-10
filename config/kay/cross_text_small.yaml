@@ -4,6 +4,10 @@ defaults:
   - override /model: dc-text
   - _self_
 
+model:
+  vnn:
+    text_terms: ../../../data/go_text/vnn_small.txt
+    onto: ../../../data/drugcell_ont_small.txt
 
 data:
   test: null
@@ -16,8 +20,9 @@ data:
 
 trainer:
   epoch: 100
-  ckpt: ../../../ckpt/text/dc_text_v1.pt
+  ckpt: ../../../ckpt/text/dc_text_v2.pt
   save_dir: ../../../ckpt
   lr: 2e-2
   scheduler: Plateau
   epoch_criterion: spearman
+  save_period: 10

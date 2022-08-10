@@ -1,0 +1,15 @@
+defaults:
+  - vnn: drugcell
+  - drug: base
+  - criterion: drugcell
+  - base_drugcell
+  - _self_
+
+final_hid: 6
+criterion: 
+  name: text
+  lambda_r: 0.0
+  lambda_t: 0.02
+vnn:
+  text_dim: 768
+  text_terms: null

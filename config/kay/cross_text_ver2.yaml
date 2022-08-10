@@ -1,16 +1,12 @@
 # @package _global_
 defaults:
   - override /data: cross_valid
+  - override /model: dc-text
   - _self_
 
 model:
-  criterion: 
-    name: text
-    lambda_r: 0.0
-    lambda_t: 0.02
   vnn:
-    text_dim: 768
-    text_terms: ../../../data/go_text/vnn_non-zero.txt
+    text_terms: ../../../data/go_text/vnn.txt
 
 data:
   test: null
@@ -28,3 +24,4 @@ trainer:
   lr: 2e-2
   scheduler: Plateau
   epoch_criterion: spearman
+  save_period: 10

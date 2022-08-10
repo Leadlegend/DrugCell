@@ -5,9 +5,9 @@ model:
     gene_hid: 32
   drug:
     drug_hid:
-      - 128
-      - 64
-      - 32
+      - 50
+      - 10
+      - 6
   final_hid: 32
   criterion:
     name: default
