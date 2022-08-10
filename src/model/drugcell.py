@@ -104,7 +104,7 @@ class DrugCellModel(nn.Module):
         term_NN_out_map.update(term_vnn_out_map)
         term_NN_out_map.update(term_drug_out_map)
         aux_out_map.update(aux_vnn_out_map)
-        aux_out_map.update(aux_drug_out_map)
+        #aux_out_map.update(aux_drug_out_map)
         final_input = torch.cat((term_vnn_out_map[self.vnn.root], drug_out),
                                 dim=1)
         final_output = self._modules['final_batchnorm_layer'](torch.tanh(
