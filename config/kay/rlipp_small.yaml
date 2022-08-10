@@ -1,0 +1,7 @@
+# @package _global_
+
+onto: ../../../data/drugcell_ont_small.txt
+terms: ../../../data/go_text/vnn_small.txt
+model:
+  vnn:
+    onto: ../../../data/drugcell_ont_small.txt

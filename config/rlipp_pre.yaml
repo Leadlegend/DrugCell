@@ -1,0 +1,14 @@
+defaults:
+  - data: predict
+  - model: drugcell
+  - trainer: predict
+  - logger: base
+  - _self_
+
+trainer:
+  save_dir: ../../../data/rlipp/feature/
+
+data:
+  test:
+    path: ../../../data/drugcell_rlipp.txt
+    batch_size: 16
