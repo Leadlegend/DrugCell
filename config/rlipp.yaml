@@ -1,0 +1,16 @@
+defaults:
+  - logger: base
+  - _self_
+
+onto: ../../../data/drugcell_ont.txt
+terms: ../../../data/go_text/vnn.txt
+data: ../../../data/drugcell_rlipp.txt
+gene2id: ../../../data/gene2ind.txt
+cell2id: ../../../data/cell2ind.txt
+feature_dir: ../../../data/rlipp/feature/
+cpu_num: 4
+hid_num: 6
+index_flag: Cell
+index_num: null
+gene_output: null
+rlipp_output: ./rlipp.txt

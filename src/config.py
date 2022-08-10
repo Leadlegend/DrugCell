@@ -129,6 +129,24 @@ class Config:
     logger: LoggerConfig
 
 
+@dataclass
+class RLIPPConfig:
+    onto: str
+    terms: str
+    data: str
+    pred: str
+    gene2id: str
+    cell2id: str
+    feature_dir: str
+    logger: LoggerConfig
+    cpu_num: int = 1
+    hid_num: int = 6
+    index_num: Optional[int] = None
+    index_flag: Optional[str] = 'Cell'
+    gene_output: Optional[str] = None
+    rlipp_output: Optional[str] = None
+
+
 @hydra.main(config_path='../config', config_name='base')
 def main(cfg: Config):
     return cfg
@@ -141,10 +159,16 @@ def args_util():
     cs = ConfigStore.instance()
     cs.store(group='trainer', name='base_drugcell_train', node=TrainerConfig)
     cs.store(group='model', name='base_drugcell', node=DrugCellConfig)
-    cs.store(group='model/criterion', name='base_drugcell', node=CriterionConfig)
+    cs.store(group='model/criterion',
+             name='base_drugcell', node=CriterionConfig)
     cs.store(group='model/vnn', name='base_drugcell', node=VNNConfig)
     cs.store(group='model/drug', name='base_base', node=DrugConfig)
     cs.store(group='data', name='base_train', node=DataConfig)
+    cs.store(group='logger', name='base_base', node=LoggerConfig)
+
+
+def rlipp_args_util():
+    cs = ConfigStore.instance()
     cs.store(group='logger', name='base_base', node=LoggerConfig)
 
 
