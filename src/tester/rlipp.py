@@ -22,7 +22,6 @@ class RLIPPCalculator():
     def __init__(self, args):
         self.logger = logging.getLogger('RLIPP Calculator')
         self.construct_data(args)
-        self.construct_index_position_map()
 
         self.cpu_count = args.cpu_num
         self.hidden_dir = args.feature_dir
@@ -34,6 +33,7 @@ class RLIPPCalculator():
         self.indexes = list(set(self.dataset[self.index_flag]))
         self.index_count = args.index_num if args.index_num else len(
             self.indexes)
+        self.construct_index_position_map()
 
     def construct_data(self, args):
         self.logger.info('Constructing Dataset...')
@@ -54,7 +54,7 @@ class RLIPPCalculator():
     def construct_index_position_map(self):
         # Create a map of a list of the position of specific drug in the dataset file
         self.logger.info('Parsing Dataset...')
-        self.index_position_map = {d: [] for d in self.drugs}
+        self.index_position_map = {d: [] for d in self.indexes}
         for i, row in tqdm(self.dataset.iterrows()):
             self.index_position_map[row[self.index_flag]].append(i)
         return self.index_position_map
@@ -63,13 +63,13 @@ class RLIPPCalculator():
         # Create a sorted map of spearman correlation values for every drug
         drug_corr_map = {}
         for index in self.indexes:
-            if len(self.index_position_map[d]) == 0:
-                drug_corr_map[d] = 0.0
+            if len(self.index_position_map[index]) == 0:
+                drug_corr_map[index] = 0.0
                 continue
             true_vals = np.take(
                 np.array(self.dataset['AUC']), self.index_position_map[index])
             pred_vals = self.get_predict_vals_by_index(index)
-            drug_corr_map[d] = stats.spearmanr(true_vals, pred_vals)[0]
+            drug_corr_map[index] = stats.spearmanr(true_vals, pred_vals)[0]
         return {drug: corr for drug, corr in sorted(drug_corr_map.items(), key=lambda item: item[1], reverse=True)}
 
     def _load_feature(self, element, size):
@@ -101,8 +101,8 @@ class RLIPPCalculator():
         self.logger.info('Constructing feature map for children of terms')
         child_feature_map = {t: [] for t in self.terms}
         for term in tqdm(self.terms):
-            children = [row['T']
-                        for _, row in self.ontology.iterrows() if row['S'] == term]
+            children = [row[1]
+                        for row in self.ontology.itertuples() if row[1] == term and row[2] == 'default']
             for child in children:
                 child_feature_map[term].append(feature_map[child])
 
@@ -119,7 +119,10 @@ class RLIPPCalculator():
         child_features = []
         for f in term_child_features:
             child_features.append(np.take(f, position_map, axis=0))
-        return np.column_stack([f for f in child_features])
+        if len(child_features) > 0:
+            return np.column_stack([f for f in child_features])
+        else:
+            return None
 
     # Executes 5-fold cross validated Ridge regression for a given hidden features matrix
     # and returns the spearman correlation value of the predicted output
@@ -132,7 +135,7 @@ class RLIPPCalculator():
         """
         pca = PCA(n_components=self.num_hiddens_genotype)
         X_pca = pca.fit_transform(X)
-
+        # X_pca = X
         regr = RidgeCV(cv=5)
         regr.fit(X_pca, y)
         y_pred = regr.predict(X_pca)
@@ -147,8 +150,11 @@ class RLIPPCalculator():
             term_child_features, self.index_position_map[index])
         y = self.get_predict_vals_by_index(index)
         p_rho, p_pred = self.exec_lm(X_parent, y)
-        c_rho, c_pred = self.exec_lm(X_child, y)
-        rlipp = p_rho/c_rho
+        if X_child is not None:
+            c_rho, c_pred = self.exec_lm(X_child, y)
+        else:
+            c_rho, c_pred = 0, 0
+        rlipp = p_rho - c_rho
         result = '{}\t{}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\t{:.3e}\n'.format(
             term, index, p_rho, p_pred, c_rho, c_pred, rlipp)
         return result
@@ -166,7 +172,7 @@ class RLIPPCalculator():
     # prints the result in "Drug Term P_rho C_rho RLIPP" format
     def calc_scores(self):
         self.logger.info('Starting Calculation')
-        sorted_indexes = list(self.create_drug_corr_map_sorted().keys())[
+        sorted_indexes = list(self.create_index_corr_map_sorted().keys())[
             0:self.index_count]
 
         start = time.time()
@@ -175,10 +181,12 @@ class RLIPPCalculator():
             'Time taken to load features: {:.4f}'.format(time.time() - start))
 
         rlipp_file, gene_rho_file = None, None
-        with open(self.rlipp_file, "w", encoding='utf-8') as rlipp_file:
+        if self.rlipp_file is not None:
+            rlipp_file = open(self.rlipp_file, "w", encoding='utf-8')
             rlipp_file.write(
-                'Term\tIndex\tP_rho\tP_pred\tC_rho\tC_pred\tRLIPP\n')
-        with open(self.gene_rho_file, "w", encoding='utf-8') as gene_rho_file:
+                    'Term\tIndex\tP_rho\tP_pred\tC_rho\tC_pred\tRLIPP\n')
+        if self.gene_rho_file is not None:
+            gene_rho_file = open(self.gene_rho_file, "w", encoding='utf-8')
             gene_rho_file.write('Gene\tRho\tP_val\n')
 
         with Parallel(backend="multiprocessing", n_jobs=self.cpu_count) as parallel:
@@ -198,11 +206,6 @@ class RLIPPCalculator():
                 self.logger.info('Index {} completed in {:.4f} seconds'.format(
                     (i+1), (time.time() - start)))
 
-        if gene_rho_file is not None:
-            gene_rho_file.close()
-        if rlipp_file is not None:
-            rlipp_file.close()
-
     def parse_rlipp_results(self):
         if not os.path.exists(self.rlipp_file):
             self.logger.error('Rlipp Result Not Found.')
@@ -212,7 +215,7 @@ class RLIPPCalculator():
         rlipp_data = pd.read_csv(self.rlipp_file, encoding='utf-8',
                                  sep='\t', header=0, use_cols=[0, 1, 6])
         rlipp_vector = {t: np.zeros(
-            [self.index_count], dtype=float64) for t in self.terms}
+            [self.index_count], dtype=np.float64) for t in self.terms}
 
         for i, row in tqdm(rlipp_data.iterrows()):
             term, index, rlipp = row[0], row[1], row[2]

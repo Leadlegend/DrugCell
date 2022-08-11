@@ -6,10 +6,10 @@ from .base import Tester
 
 
 class DrugCellTester(Tester):
-    def __init__(self, model, criterion, config, device,
-                 data_loader, epoch_criterion=None):
-        super(DrugCellTester, self).__init__(model, criterion, config, device,
-                                             data_loader, epoch_criterion)
+    def __init__(self, model, config, device,
+                 data_loader, criterion=None, epoch_criterion=None):
+        super(DrugCellTester, self).__init__(model, config, device,
+                                             data_loader, criterion, epoch_criterion)
         self.model._to_(self.device)
 
     def _concat_output(self, labels, output):
@@ -37,7 +37,7 @@ class DrugCellTester(Tester):
             for batch_idx, batch in enumerate(tqdm(self.data_loader)):
                 data, target = batch.to(self.device)
                 output = self.model(data)
-                feature = self._out2feature(output)
+                feature = self._out2feature_map(output)
                 for k, v in feature.items():
                     path = os.path.join(output_dir, k)
                     f = open(path, 'a', encoding='utf-8')
@@ -52,9 +52,10 @@ class DrugCellTester(Tester):
         """
         res = dict()
         pred, features_map = output
-        #pred = pred['final']
+        final = pred['final']
+        res['Final.txt'] = self._feature2text(final)
         pred = pred[self.model.vnn.root]
-        res['pred.txt'] = self._feature2text(pred)
+        res['Final_root.txt'] = self._feature2text(pred)
         for term, feature in features_map.items():
             if term.startswith('final') or term.startswith('drug'):
                 continue
