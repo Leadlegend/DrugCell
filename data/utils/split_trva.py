@@ -15,8 +15,8 @@ def main(path, valid_size=5000):
         f_path = os.path.join(path, f_path)
         if not os.path.isfile(f_path):
             continue
-        train_path = os.path.join(path, 'train', 'train_%s.txt' % f_path[-1])
-        val_path = os.path.join(path, 'val', 'val_%s.txt' % f_path[-1])
+        train_path = os.path.join(path, 'train', 'train_%s.txt' % f_path[-5])
+        val_path = os.path.join(path, 'val', 'val_%s.txt' % f_path[-5])
         train = open(train_path, 'w', encoding='utf-8')
         val = open(val_path, 'w', encoding='utf-8')
         f = open(f_path, 'r', encoding='utf-8')

@@ -13,3 +13,4 @@ data/cross_valid/
 data/raw
 scripts/test.sh
 data/utils/config.py
+*.log
