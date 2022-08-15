@@ -10,5 +10,5 @@ trainer:
 
 data:
   test:
-    path: ../../../data/drugcell_rlipp.txt
-    batch_size: 16
+    path: ../../../data/cross_valid/drugcell_split_1.txt
+    batch_size: 1024

@@ -1,4 +1,5 @@
 data/rlipp
+data/*old
 .DS_Store
 test/
 !config/**/test
