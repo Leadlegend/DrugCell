@@ -10,10 +10,10 @@ class Tester:
 
     def __init__(self,
                  model,
-                 criterion,
                  config,
                  device,
                  data_loader,
+                 criterion=None,
                  epoch_criterion=None):
         self.config = config
         self.device = device
