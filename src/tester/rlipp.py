@@ -206,24 +206,34 @@ class RLIPPCalculator():
                 self.logger.info('Index {} completed in {:.4f} seconds'.format(
                     (i+1), (time.time() - start)))
 
-    def parse_rlipp_results(self):
+        if gene_rho_file is not None:
+            gene_rho_file.close()
+        if rlipp_file is not None:
+            rlipp_file.close()
+
+    def parse_rlipp_results(self, terms=None):
         if not os.path.exists(self.rlipp_file):
             self.logger.error('Rlipp Result Not Found.')
             exit(1)
         self.cell_index = dict(
             zip(self.cell_index['Cell'], self.cell_index['Index']))
+        if terms is None:
+            terms = self.terms
+        term2id = {t: i for i, t in enumerate(terms)}
         rlipp_data = pd.read_csv(self.rlipp_file, encoding='utf-8',
                                  sep='\t', header=0, use_cols=[0, 1, 6])
-        rlipp_vector = {t: np.zeros(
-            [self.index_count], dtype=np.float64) for t in self.terms}
+        rlipp_vector = np.zeros(
+            [len(terms), self.index_count], dtype=np.float64)
 
         for i, row in tqdm(rlipp_data.iterrows()):
             term, index, rlipp = row[0], row[1], row[2]
             if i < 10:
                 print("%s\t%s\t%s" % (term, index, rlipp))
-            assert term in rlipp_vector
+            if term not in terms:
+                continue
             assert index in self.cell_index
-            index = self.cell_index[index]
-            rlipp_vector[term][index] = rlipp
+            x = term2id[term]
+            y = self.cell_index[index]
+            rlipp_vector[x, y] = rlipp
 
         return rlipp_vector

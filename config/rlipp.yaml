@@ -9,7 +9,7 @@ pred: ../../../data/rlipp/feature/Final_root.txt
 gene2id: ../../../data/gene2ind.txt
 cell2id: ../../../data/cell2ind.txt
 feature_dir: ../../../data/rlipp/feature/
-cpu_num: 4
+cpu_num: 8
 hid_num: 6
 index_flag: Cell
 index_num: null
