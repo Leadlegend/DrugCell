@@ -1,29 +1,35 @@
+import os
 import torch
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from typing import Optional, List
+
+from tqdm import tqdm
+from scipy import stats
+from copy import deepcopy
+from typing import Optional, List, Union
 from scipy.stats import gaussian_kde
 from matplotlib.colors import LogNorm
-from copy import deepcopy
 mpl.use('tkagg')
 
 
-def get_rlipp_vectors(rlipp_file, terms):
+def get_rlipp_vectors(rlipp_file, cell2id, terms):
     if not os.path.exists(rlipp_file):
         exit(1)
+    cell_index = pd.read_csv(
+            cell2id, sep="\t", header=None, names=['Index', 'Cell'], dtype={'Index': int, 'Cell': str})
     cell2index = dict(
-        zip(self.cell_index['Cell'], self.cell_index['Index']))
+        zip(cell_index['Cell'], cell_index['Index']))
+    #cell2index = dict(zip(cells, range(len(cells))))
     term2id = {t: i for i, t in enumerate(terms)}
     rlipp_data = pd.read_csv(rlipp_file, encoding='utf-8',
-                                 sep='\t', header=0, use_cols=[0, 1, 6])
+                             sep='\t', header=0, usecols=[0, 1, 6])
     rlipp_vector = np.zeros(
-        [len(terms), len(cell2index)], dtype=float64)
+        [len(terms), len(cell2index)], dtype=np.float64)
 
     for i, row in tqdm(rlipp_data.iterrows()):
         term, index, rlipp = row[0], row[1], row[2]
-        if i < 10:
-            print("%s\t%s\t%s" % (term, index, rlipp))
         if term not in terms:
             continue
         assert index in cell2index
@@ -37,7 +43,7 @@ def get_text_vectors(text_embed_path, terms):
     ckpt = torch.load(text_embed_path, map_location='cpu')
     text_vector = np.zeros([len(terms), 768], dtype=np.float64)
     for x, term in enumerate(terms):
-        key = "vnn.%s_text-feature" %term
+        key = "vnn.%s_text-feature" % term
         text_vector[x] = ckpt[key].detach().numpy()
     return text_vector
 
@@ -55,7 +61,7 @@ def get_vectors_similarity(vectors):
     v2 = deepcopy(vectors)
     xs = get_cos_similar_matrix(vectors, v2)
     return xs
-    
+
 
 def get_random_data(size=10000):
     # Generate fake data
@@ -73,7 +79,9 @@ def scatter_plot_with_density_kde(xs: List[float], ys: List[float]):
     plt.show()
 
 
-def scatter_plot_with_density_hist2d(xs, ys):
+def scatter_plot_with_density_hist2d(xs, ys, ver):
+    cor, _ = stats.spearmanr(xs, ys)
+    print(cor)
     plt.hist2d(xs, ys, bins=1000, norm=LogNorm())
     plt.colorbar()
     linear_model = np.polyfit(xs, ys, 1)
@@ -81,23 +89,35 @@ def scatter_plot_with_density_hist2d(xs, ys):
     linear_model_fn = np.poly1d(linear_model)
     x = np.arange(0, 2)
     plt.plot(x, linear_model_fn(x), color='red')
+    plt.text(x=0.95, y=0.95, s='y=%.3fx+%.3f' % (linear_model[0], linear_model[1]), color='red')
+    plt.xlabel("RLIPP Similarity")
+    plt.ylabel('Text Embedding Similarity')
+    plt.title("ver.%s: spearman correlation: %.3f" % (ver, cor))
+    plt.savefig('./text_ver%s.png' % ver)
     plt.show()
 
 
-def main():
-    term_embed_path = 'ckpt/text/dc_text_v2.pt'
-    term_path = 'data/go_text/vnn_non-zero.txt'
+def main(index: Union[int, list] = 1):
     rlipp_path = 'data/rlipp.txt'
-    terms = [line.strip() for line in open(term_path, 'r', encoding='utf-8')]
-    #rlipp_vectors = get_rlipp_vectors(rlipp_path, terms)
-    rlipp_vectors, _ = get_random_data(size=(len(terms), 2))
-    text_vectors = get_text_vectors(term_embed_path, terms)
-    print(text_vectors.shape)
-    print(rlipp_vectors.shape)
-    xs, ys = get_vectors_similarity(rlipp_vectors), get_vectors_similarity(text_vectors)
-    print(xs.shape)
-    scatter_plot_with_density_hist2d(xs, ys)
+    cell2id = 'data/cell2ind.txt'
+    term_paths = ['data/go_text/vnn.txt',
+                  'data/go_text/vnn_non-zero.txt', 'data/go_text/vnn_small.txt']
+
+    if isinstance(index, int):
+        index = [index]
+    for i in index:
+        term_path = term_paths[i-1]
+        term_embed_path = 'ckpt/text/dc_text_v%d.pt' % (i)
+        terms = [line.strip()
+                 for line in open(term_path, 'r', encoding='utf-8')]
+        rlipp_vectors = get_rlipp_vectors(rlipp_path, cell2id, terms)
+        text_vectors = get_text_vectors(term_embed_path, terms)
+        print("text vectors:", text_vectors.shape)
+        print("rlipp vectors:", rlipp_vectors.shape)
+        xs, ys = get_vectors_similarity(
+            rlipp_vectors), get_vectors_similarity(text_vectors)
+        scatter_plot_with_density_hist2d(xs, ys, ver=i)
 
 
 if __name__ == '__main__':
-    main()
+    main([1, 2, 3])
