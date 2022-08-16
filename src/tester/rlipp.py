@@ -55,7 +55,7 @@ class RLIPPCalculator():
         # Create a map of a list of the position of specific drug in the dataset file
         self.logger.info('Parsing Dataset...')
         self.index_position_map = {d: [] for d in self.indexes}
-        for i, row in tqdm(self.dataset.iterrows()):
+        for i, row in self.dataset.iterrows():
             self.index_position_map[row[self.index_flag]].append(i)
         return self.index_position_map
 
@@ -83,13 +83,21 @@ class RLIPPCalculator():
     def load_gene_features(self, gene):
         return self._load_feature(gene, 1)
 
-    # Load hidden features for all the terms and genes
-    def load_features(self):
-        self.logger.info('Loading features for all the terms...')
+    def load_features(self, terms=None):
+        """
+        Load hidden features for all the terms and genes
+        return feature_map: term -> model outputs [dataset_size, num_hidden]
+        return children_feature_map: term -> List[child_term_outputs]
+        """
+        if not isinstance(terms, list):
+            terms = self.terms
         feature_map = {}
+        child_feature_map = {t: [] for t in terms}
+
+        self.logger.info('Loading features for all the terms...')
         with Pool(self.cpu_count) as p:
-            results = p.map(self.load_term_features, self.terms)
-        for i, term in enumerate(self.terms):
+            results = p.map(self.load_term_features, terms)
+        for i, term in enumerate(terms):
             feature_map[term] = results[i]
         if self.gene_rho_file is not None:
             self.logger.info('Loading features for all the genes...')
@@ -99,8 +107,7 @@ class RLIPPCalculator():
                 feature_map[gene] = results[i]
 
         self.logger.info('Constructing feature map for children of terms')
-        child_feature_map = {t: [] for t in self.terms}
-        for term in tqdm(self.terms):
+        for term in tqdm(terms):
             children = [row[1]
                         for row in self.ontology.itertuples() if row[1] == term and row[2] == 'default']
             for child in children:
@@ -115,10 +122,11 @@ class RLIPPCalculator():
         return np.take(self.predicted_vals, self.index_position_map[index])
 
     # Get a hidden feature matrix of a given term's children
-    def get_child_features(self, term_child_features, position_map):
+    def get_child_features(self, term_child_features, index):
         child_features = []
         for f in term_child_features:
-            child_features.append(np.take(f, position_map, axis=0))
+            child_features.append(
+                np.take(f, self.index_position_map[index], axis=0))
         if len(child_features) > 0:
             return np.column_stack([f for f in child_features])
         else:
@@ -126,17 +134,21 @@ class RLIPPCalculator():
 
     # Executes 5-fold cross validated Ridge regression for a given hidden features matrix
     # and returns the spearman correlation value of the predicted output
-    def exec_lm(self, X, y):
+    def exec_lm(self, X, y, pca_flag=False):
         """
         param X: [data_size, feature_size]
         param y: [data_size,]
         return rho: spearman correlation value
         return pred
         """
-        pca = PCA(n_components=self.num_hiddens_genotype)
-        X_pca = pca.fit_transform(X)
-        # X_pca = X
-        regr = RidgeCV(cv=5)
+        X_pca = X
+        if pca_flag:
+            pca = PCA(n_components=self.num_hiddens_genotype)
+            X_pca = pca.fit_transform(X)
+        cv_num = None
+        if X_pca.shape[0] > 10:
+            cv_num = 5
+        regr = RidgeCV(cv=cv_num)
         regr.fit(X_pca, y)
         y_pred = regr.predict(X_pca)
         return stats.spearmanr(y_pred, y)
@@ -146,8 +158,7 @@ class RLIPPCalculator():
     def calc_term_rlipp(self, term_features, term_child_features, term, index):
         X_parent = np.take(
             term_features, self.index_position_map[index], axis=0)
-        X_child = self.get_child_features(
-            term_child_features, self.index_position_map[index])
+        X_child = self.get_child_features(term_child_features, index)
         y = self.get_predict_vals_by_index(index)
         p_rho, p_pred = self.exec_lm(X_parent, y)
         if X_child is not None:
@@ -173,7 +184,7 @@ class RLIPPCalculator():
     def calc_scores(self):
         self.logger.info('Starting Calculation')
         sorted_indexes = list(self.create_index_corr_map_sorted().keys())[
-            0:self.index_count]
+            0: self.index_count]
 
         start = time.time()
         feature_map, child_feature_map = self.load_features()
@@ -184,13 +195,14 @@ class RLIPPCalculator():
         if self.rlipp_file is not None:
             rlipp_file = open(self.rlipp_file, "w", encoding='utf-8')
             rlipp_file.write(
-                    'Term\tIndex\tP_rho\tP_pred\tC_rho\tC_pred\tRLIPP\n')
+                'Term\tIndex\tP_rho\tP_pval\tC_rho\tC_pval\tRLIPP\n')
         if self.gene_rho_file is not None:
             gene_rho_file = open(self.gene_rho_file, "w", encoding='utf-8')
             gene_rho_file.write('Gene\tRho\tP_val\n')
 
+        self.logger.info('Start Calculation of %d Cell-lines' % self.index_count)
         with Parallel(backend="multiprocessing", n_jobs=self.cpu_count) as parallel:
-            for i, index in enumerate(sorted_indexes):
+            for index in tqdm(sorted_indexes):
                 start = time.time()
                 if rlipp_file is not None:
                     rlipp_results = parallel(delayed(self.calc_term_rlipp)(
@@ -203,15 +215,15 @@ class RLIPPCalculator():
                     for result in gene_rho_results:
                         gene_rho_file.write(result)
 
-                self.logger.info('Index {} completed in {:.4f} seconds'.format(
-                    (i+1), (time.time() - start)))
-
         if gene_rho_file is not None:
             gene_rho_file.close()
         if rlipp_file is not None:
             rlipp_file.close()
 
     def parse_rlipp_results(self, terms=None):
+        """
+        return rlipp_vectors [term_num, cell-line_num]
+        """
         if not os.path.exists(self.rlipp_file):
             self.logger.error('Rlipp Result Not Found.')
             exit(1)
@@ -224,7 +236,6 @@ class RLIPPCalculator():
                                  sep='\t', header=0, use_cols=[0, 1, 6])
         rlipp_vector = np.zeros(
             [len(terms), self.index_count], dtype=np.float64)
-
         for i, row in tqdm(rlipp_data.iterrows()):
             term, index, rlipp = row[0], row[1], row[2]
             if i < 10:
@@ -235,5 +246,4 @@ class RLIPPCalculator():
             x = term2id[term]
             y = self.cell_index[index]
             rlipp_vector[x, y] = rlipp
-
         return rlipp_vector
